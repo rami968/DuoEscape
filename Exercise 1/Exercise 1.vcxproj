@@ -128,16 +128,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Doors.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Player.cpp" />
-    <ClCompile Include="point.cpp" />
+    <ClCompile Include="Point.cpp" />
     <ClCompile Include="screen.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Direction.h" />
+    <ClInclude Include="Doors.h" />
     <ClInclude Include="Player.h" />
-    <ClInclude Include="point.h" />
+    <ClInclude Include="Point.h" />
     <ClInclude Include="screen.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
