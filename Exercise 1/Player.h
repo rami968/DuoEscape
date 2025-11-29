@@ -3,17 +3,19 @@
 #include <iostream>
 #include "utils.h"
 #include "Direction.h"
-#include "point.h"
+#include "Point.h"
+#include "screen.h"
 
 class Player {
 	static constexpr int NUM_KEYS = 6;
 	char the_keys[NUM_KEYS];
-	point p;
+	Point p;
+	screen& theScreen;
 public:
-	Player(const point& point, const char(&keys)[NUM_KEYS + 1]) {}
-
-	void disposeElement();
+	Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen);
+	//void disposeElement();
 	void handleKeyPressed(char key);
-	
-	
-
+	void move();
+	void draw();
+};
+//

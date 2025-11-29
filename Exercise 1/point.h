@@ -4,13 +4,13 @@
 #include "utils.h"
 #include "Direction.h"
 
-class point {
+class Point {
 	int x = 1, y = 1;
 	int diff_x = 1, diff_y = 0;
 	char ch = '*';
 public:
-	point() {}
-	point(int x1, int y1, int diffx, int diffy, char c) {
+	Point() {}
+	Point(int x1, int y1, int diffx, int diffy, char c) {
 		x = x1;
 		y = y1;
 		diff_x = diffx;
