@@ -13,10 +13,11 @@ GameManager::GameManager() {
 	screens.push_back(screen(0));
 	screens.push_back(screen(1));
 	screens.push_back(screen(2));
+	currentScreenID = 0;
 }
 
 
-void GameManager::changeScreen(int newScreenID, const Point& destinationPos, Player p1, Player p2) {
+void GameManager::changeScreen(int newScreenID, const Point& destinationPos, Player& p1, Player& p2) {
 	if (newScreenID >= 0 && newScreenID < screens.size()) {
 		currentScreenID = newScreenID;
 		getCurrentScreen().initScreenData(currentScreenID);
@@ -35,17 +36,17 @@ void GameManager::run() {
 	screen.draw();
 	Player player1 = Player(Point(10, 10, 1, 0, '$'), "wdxase", screens[0]);
 	Player player2 = Player(Point(15, 5, 0, 1, '&'), "ilmjko", screens[0]);
-	Player players[] = { player1, player2 };
+	Player* players[] = { &player1, &player2 };
 	bool p1_has_exited = false;
 	bool p2_has_exited = false;
 	Doors* p1_exit_door = nullptr;
 	Doors* p2_exit_door = nullptr;
-	for (auto& p : players) {
-		p.draw();
+	for (auto p : players) {
+		p->draw();
 	}
 	while (true) {
-		for (auto& p : players) {
-			p.move();
+		for (auto p : players) {
+			p->move();
 		}
 		Doors* p1_door_signal = player1.getTransitionDoor();
 		Doors* p2_door_signal = player2.getTransitionDoor();
@@ -88,8 +89,8 @@ void GameManager::run() {
 				}
 			}
 			else {
-				for (auto& p : players) {
-					p.handleKeyPressed(key);
+				for (auto p : players) {
+					p->handleKeyPressed(key);
 				}
 			}
 		}

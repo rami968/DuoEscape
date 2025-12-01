@@ -1,26 +1,28 @@
 #include "Player.h"
 #include "Point.h"
-#include "Doors.h"
+#include <cctype>
+#include <cstring>
 
 Player::Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen):
 	theScreen(screen) {
 	p = point;
-	memcpy(the_keys, keys, NUM_KEYS * sizeof(the_keys[0]));
+	std::memcpy(the_keys, keys, NUM_KEYS * sizeof(the_keys[0]));
+	heldElement = ' ';
 }
 
-
 void Player::handleKeyPressed(char key_pressed) {
-	size_t index = 0;
-	for (char k : the_keys) {
-		//if (std::tolower(k) == 'e' || std::tolower(k) == 'o') {
-		//	disposeElement;
-		//	return;
-		//}
-		if (std::tolower(k) == std::tolower(key_pressed)) {
-			p.setDirection((Direction)index);
+	char lk = std::tolower((key_pressed));
+	if (lk == 'e' || lk == 'o') {
+		disposeElement();
+		return;
+	}
+
+	for (size_t index = 0; index < NUM_KEYS; ++index) {
+		char k = the_keys[index];
+		if (std::tolower((k)) == lk) {
+			p.setDirection(Direction(index));
 			return;
 		}
-		++index;
 	}
 }
 
@@ -39,8 +41,9 @@ void Player::move() {
 		char targetChar = theScreen.getCharAt(p);
 		Doors* currentDoor = theScreen.getDoorByChar(targetChar);
 		if (currentDoor != nullptr) {
-			if (currentDoor->canPlayerPass({}, {})) {
-				//p = currentDoor->getDestinationPosition();
+			if (currentDoor->canPlayerPass(p_orig, heldElement)) {
+				// teleport player to the door's destination
+				p = currentDoor->getDestinationPosition();
 				currDoor = currentDoor;
 			}
 			else {
@@ -55,6 +58,8 @@ void Player::move() {
 		p = p_orig;
 	}
 	else if (theScreen.isKey(p)) {
+		char elemChar = theScreen.getCharAt(p);
+		pickUpElement(elemChar, p);
 		p = p_orig;
 	}
 	else if (theScreen.isRiddle(p)) {
@@ -67,4 +72,10 @@ void Player::setPosition(const Point& newPos) {
 	p = newPos;
 }
 
-// disposeElement();
+char Player::getHeldElement() const { return heldElement; }
+Point Player::getHeldElementPos() const { return heldElementPos; }
+bool Player::hasElement() const { return heldElement != ' '; }
+bool Player::hasKey() const { return heldElement == 'K'; }
+
+void Player::pickUpElement(char element, const Point& pos) { heldElement = element; heldElementPos = pos; }
+void Player::disposeElement() { heldElement = ' '; }

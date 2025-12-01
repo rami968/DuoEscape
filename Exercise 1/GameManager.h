@@ -1,6 +1,7 @@
 #pragma once
 #include "screen.h"
 #include "Player.h"
+#include "Point.h"
 #include <vector>
 
 
@@ -11,7 +12,7 @@ private:
 public:
     GameManager();
     void run();
-    void changeScreen(int newScreenID, const Point& destinationPos, Player p1, Player p2);
+    void changeScreen(int newScreenID, const Point& destinationPos, Player& p1, Player& p2);
 
     screen& getCurrentScreen() {
         return screens[currentScreenID];
