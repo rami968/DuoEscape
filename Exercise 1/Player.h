@@ -11,9 +11,9 @@ class Player {
 	char the_keys[NUM_KEYS];
 	Point p;
 	Doors* currDoor = nullptr;
-	screen theScreen;
+	screen& theScreen;
 public:
-	Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen screen);
+	Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen);
 	//void disposeElement();
 	void handleKeyPressed(char key);
 	void move();
