@@ -1,5 +1,6 @@
 #include "Player.h"
 #include "Point.h"
+#include "Doors.h"
 
 Player::Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen):
 	theScreen(screen) {
@@ -35,7 +36,20 @@ void Player::move() {
 		p = p_orig;
 	}
 	else if (theScreen.isDoor(p)) {
-		p = p_orig;
+		char targetChar = theScreen.getCharAt(p);
+		Doors* currentDoor = theScreen.getDoorByChar(targetChar);
+		if (currentDoor != nullptr) {
+			if (currentDoor->canPlayerPass({}, {})) {
+				//p = currentDoor->getDestinationPosition();
+				currDoor = currentDoor;
+			}
+			else {
+				p = p_orig;
+			}
+		}
+		else {
+			p = p_orig;
+		}
 	}
 	else if (theScreen.isSwitchOff(p) || theScreen.isSwitchOn(p)) {
 		p = p_orig;
@@ -49,5 +63,8 @@ void Player::move() {
 	p.draw();
 }
 
+void Player::setPosition(const Point& newPos) {
+	p = newPos;
+}
 
 // disposeElement();

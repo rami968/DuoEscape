@@ -10,12 +10,16 @@ class Player {
 	static constexpr int NUM_KEYS = 6;
 	char the_keys[NUM_KEYS];
 	Point p;
-	screen& theScreen;
+	Doors* currDoor = nullptr;
+	screen theScreen;
 public:
-	Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen);
+	Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen screen);
 	//void disposeElement();
 	void handleKeyPressed(char key);
 	void move();
 	void draw();
+	Doors* getTransitionDoor() const { return currDoor; }
+	void resetTransitionSignal() { currDoor = nullptr; }
+	void setPosition(const Point& newPos);
 };
 //
