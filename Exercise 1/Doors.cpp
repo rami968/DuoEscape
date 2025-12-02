@@ -3,16 +3,16 @@
 
 
 Doors::Doors(int id, int destID, const Point& destPos, bool oneWay, bool openForever,
-    const std::vector<int>& keys, const std::map<int, SwitchState>& switches): 
+    const std::vector<Point>& keys, const std::map<int, SwitchState>& switches): 
     doorID(id),
     destinationScreenID(destID),
     destinationPosition(destPos),
     isOneWay(oneWay),
     isOpenForever(openForever),
-    requiredKeyIDs(keys),
+    requiredKeyPos(keys),
     requiredSwitches(switches)
 {
-    if (requiredKeyIDs.empty() && requiredSwitches.empty()) {
+    if (requiredKeyPos.empty() && requiredSwitches.empty()) {
         isCurrentlyOpen = true;
     }
     else {
@@ -20,22 +20,22 @@ Doors::Doors(int id, int destID, const Point& destPos, bool oneWay, bool openFor
     }
 }
 
-bool Doors::canPlayerPass(const std::vector<int>& playerKeyIDs,
+bool Doors::canPlayerPass(const std::vector<Point>& playerKeyPos,
     const std::map<int, SwitchState>& screenSwitchStates) const
 {
     if (isCurrentlyOpen && isOpenForever) {
         return true;
     }
-    for (int requiredID : requiredKeyIDs) {
+    for (const Point& requiredPos : requiredKeyPos) {
         bool keyFoundInInventory = false;
-
-        for (int heldKeyID : playerKeyIDs) {
-            if (requiredID == heldKeyID) {
+        for (const Point& heldKeyPos : playerKeyPos) {
+            if (heldKeyPos.getX() == requiredPos.getX() &&
+                heldKeyPos.getY() == requiredPos.getY()) {
                 keyFoundInInventory = true;
-                break; 
+                break;
             }
         }
-
+        
         if (!keyFoundInInventory) {
             return false; 
         }
@@ -55,21 +55,25 @@ bool Doors::canPlayerPass(const std::vector<int>& playerKeyIDs,
     return true;
 }
 
-void Doors::openDoor(std::vector<int>& playerKeyIDs) {
+void Doors::openDoor(std::vector<Point>& playerKeyPos) {
     if (!isCurrentlyOpen) {
         isCurrentlyOpen = true;
 
-        for (int usedKeyID : requiredKeyIDs) {
-            for (size_t i = 0; i < playerKeyIDs.size(); ++i) {
-                if (playerKeyIDs[i] == usedKeyID) {             
-                    if (i != playerKeyIDs.size() - 1) {
-                        playerKeyIDs[i] = playerKeyIDs.back(); 
+        for (const Point& usedKeyPos : requiredKeyPos) {
+            for (size_t i = 0; i < playerKeyPos.size(); ++i) {
+                if (playerKeyPos[i].getX() == usedKeyPos.getX() &&
+                    playerKeyPos[i].getY() == usedKeyPos.getY()) {
+                    if (i != playerKeyPos.size() - 1) {
+                        playerKeyPos[i] = playerKeyPos.back();
                     }
-                    playerKeyIDs.pop_back(); 
+                    playerKeyPos.pop_back();
                     break; 
                 }
             }
         }
     }
 }
+
+
+
 

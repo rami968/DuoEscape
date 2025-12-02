@@ -13,6 +13,7 @@ private:
 	int currentScreenID = 0;
 	char mapData[MAX_Y][MAX_X + 1];
 	std::vector<Doors> doors;
+
 public:
 	screen(int id = 0) { initScreenData(id); }
 	char getCharAt(const Point& p) const {
@@ -39,5 +40,5 @@ public:
 	bool isRiddle(const Point& p) const {
 		return getCharAt(p) == '?';
 	}
+	void setCharAt(const Point& pos, char ch);
 };
-

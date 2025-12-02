@@ -123,3 +123,9 @@ Doors* screen::getDoorByChar(char doorChar) {
     }
     return nullptr;
 }
+
+void screen:: setCharAt(const Point& pos, char ch)
+{
+    mapData[pos.getY()][pos.getX()] = ch;
+}
+
