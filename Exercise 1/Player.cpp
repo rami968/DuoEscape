@@ -2,7 +2,7 @@
 #include "Point.h"
 #include "Doors.h"
 
-Player::Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen):
+Player::Player(Point point, const char(&keys)[NUM_KEYS + 1], screen& screen):
 	theScreen(screen) {
 	p = point;
 	memcpy(the_keys, keys, NUM_KEYS * sizeof(the_keys[0]));
@@ -63,7 +63,7 @@ void Player::move() {
 	p.draw();
 }
 
-void Player::setPosition(const Point& newPos) {
+void Player::setPosition(Point newPos) {
 	p = newPos;
 }
 

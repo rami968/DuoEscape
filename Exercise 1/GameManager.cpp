@@ -9,14 +9,14 @@
 
 enum Keys { ESC = 27 };
 
-GameManager::GameManager() {
+GameManager::GameManager(Player p_1, Player p_2): player1(p_1), player2(p_2){
 	screens.push_back(screen(0));
 	screens.push_back(screen(1));
 	screens.push_back(screen(2));
 }
 
 
-void GameManager::changeScreen(int newScreenID, const Point& destinationPos, Player p1, Player p2) {
+void GameManager::changeScreen(int newScreenID, Point destinationPos, Player p1, Player p2) {
 	if (newScreenID >= 0 && newScreenID < screens.size()) {
 		currentScreenID = newScreenID;
 		getCurrentScreen().initScreenData(currentScreenID);
@@ -35,6 +35,7 @@ void GameManager::run() {
 	screen.draw();
 	Player player1 = Player(Point(10, 10, 1, 0, '$'), "wdxase", screens[0]);
 	Player player2 = Player(Point(15, 5, 0, 1, '&'), "ilmjko", screens[0]);
+	GameManager(Player(Point(10, 10, 1, 0, '$'), "wdxase", screens[0]), Player(Point(15, 5, 0, 1, '&'), "ilmjko", screens[0]));
 	Player players[] = { player1, player2 };
 	bool p1_has_exited = false;
 	bool p2_has_exited = false;

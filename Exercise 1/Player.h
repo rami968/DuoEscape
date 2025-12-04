@@ -13,13 +13,13 @@ class Player {
 	Doors* currDoor = nullptr;
 	screen& theScreen;
 public:
-	Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen);
+	Player(Point point, const char(&keys)[NUM_KEYS + 1], screen& screen);
 	//void disposeElement();
 	void handleKeyPressed(char key);
 	void move();
 	void draw();
 	Doors* getTransitionDoor() const { return currDoor; }
 	void resetTransitionSignal() { currDoor = nullptr; }
-	void setPosition(const Point& newPos);
+	void setPosition(Point newPos);
 };
 //
