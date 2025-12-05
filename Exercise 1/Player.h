@@ -9,10 +9,11 @@
 
 class Player {
 	static constexpr int NUM_KEYS = 6;
-	static constexpr int MOVE_TICK_INTERVAL = 2; // number of game loops to wait between moves
+	static constexpr int MOVE_TICK_INTERVAL = 4; // number of game loops to wait between moves
 	char the_keys[NUM_KEYS];
 	Point p;
 	Doors* currDoor = nullptr;
+	bool awaitingScreenTransition = false; // true when player already passed through a door
 	screen* theScreen;
 	Point heldElementPos;
 	char heldElement = ' ';
@@ -32,7 +33,8 @@ public:
 	bool hasElement() const;
 	void pickUpElement(char element, const Point& pos);
 	Doors* getTransitionDoor() const { return currDoor; }
-	void resetTransitionSignal() { currDoor = nullptr; }
+	bool isAwaitingTransition() const { return awaitingScreenTransition; }
+	void resetTransitionSignal();
 	void setPosition(const Point& newPos);
 	void setScreen(screen* newScreen) {
 		theScreen = newScreen;

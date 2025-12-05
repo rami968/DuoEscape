@@ -25,6 +25,8 @@ void GameManager::changeScreen(int newScreenID, const Point& destinationPos, Pla
 		getCurrentScreen().draw();
 		p1.setScreen(&currentScreen);
 		p2.setScreen(&currentScreen);
+		p1.resetTransitionSignal();
+		p2.resetTransitionSignal();
 		p1.setPosition(destinationPos);
 		p2.setPosition(destinationPos);
 		p1.draw();

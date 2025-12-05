@@ -13,6 +13,9 @@ Player::Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& scre
 }
 
 void Player::handleKeyPressed(char key_pressed) {
+	if (awaitingScreenTransition) {
+		return;
+	}
 	char lk = std::tolower(key_pressed);
 	if (lk == 'e' || lk == 'o') {
 		disposeElement();
@@ -28,10 +31,16 @@ void Player::handleKeyPressed(char key_pressed) {
 }
 
 void Player::draw() {
+	if (awaitingScreenTransition) {
+		return;
+	}
 	p.draw();
 }
 
 void Player::move() {
+	if (awaitingScreenTransition) {
+		return;
+	}
 	// function by copylot 
 	if (ticksUntilNextMove > 0) {
 		--ticksUntilNextMove;
@@ -64,6 +73,9 @@ void Player::move() {
 	   p.setChar(playerChar);
 	   p.setDirection(Direction::STAY);
 	   currDoor = currentDoor;
+	   awaitingScreenTransition = true;
+	   ticksUntilNextMove = 0;
+	   return;
 			}
 		}
 		else {
@@ -88,7 +100,9 @@ void Player::move() {
 	else if (theScreen->isRiddle(p)) {
 		p = p_orig;
 	}
-	p.draw();
+	if (!awaitingScreenTransition) {
+		p.draw();
+	}
 }
 
 void Player::setPosition(const Point& newPos) {
@@ -107,6 +121,12 @@ void Player::pickUpElement(char element, const Point& pos)
 	if (element == 'K') {
 		collectedKeys.push_back(pos);
 	}
+}
+
+void Player::resetTransitionSignal() {
+	currDoor = nullptr;
+	awaitingScreenTransition = false;
+	ticksUntilNextMove = 0;
 }
 
 
