@@ -8,12 +8,14 @@
 
 class Player {
 	static constexpr int NUM_KEYS = 6;
+	static constexpr int MOVE_TICK_INTERVAL = 2; // number of game loops to wait between moves
 	char the_keys[NUM_KEYS];
 	Point p;
 	Doors* currDoor = nullptr;
 	screen* theScreen;
 	Point heldElementPos;
 	char heldElement = ' ';
+	int ticksUntilNextMove = 0;
 	
 public:
 	Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen);

@@ -32,6 +32,12 @@ void Player::draw() {
 }
 
 void Player::move() {
+	// function by copylot 
+	if (ticksUntilNextMove > 0) {
+		--ticksUntilNextMove;
+		return; 
+	}
+	ticksUntilNextMove = MOVE_TICK_INTERVAL;
 	p.draw(' ');
 	Point p_orig = p;
 	p.move();
