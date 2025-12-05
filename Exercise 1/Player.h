@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <vector>
 #include "utils.h"
 #include "Direction.h"
 #include "Point.h"
@@ -16,6 +17,9 @@ class Player {
 	Point heldElementPos;
 	char heldElement = ' ';
 	int ticksUntilNextMove = 0;
+	std::vector<Point> collectedKeys;
+	bool hasKeyInInventory(const Point& keyPos) const;
+	bool removeKeyFromInventory(const Point& keyPos);
 	
 public:
 	Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen);
@@ -33,6 +37,7 @@ public:
 	void setScreen(screen* newScreen) {
 		theScreen = newScreen;
 	}
+	const std::vector<Point>& getCollectedKeys() const { return collectedKeys; }
 
 
 };

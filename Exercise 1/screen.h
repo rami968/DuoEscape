@@ -2,7 +2,10 @@
 #include <iostream>
 #include "Point.h"
 #include "Doors.h"
+#include "SwitchState.h"
+#include "SwitchBoard.h"
 #include <vector>
+#include <map>
 
 using std::cout, std::endl;
 
@@ -13,6 +16,7 @@ private:
 	int currentScreenID = 0;
 	char mapData[MAX_Y][MAX_X + 1];
 	std::vector<Doors> doors;
+	SwitchBoard switchBoard;
 
 public:
 	screen(int id = 0) { initScreenData(id); }
@@ -20,6 +24,12 @@ public:
 		return mapData[p.getY()][p.getX()];
 	}
 	Doors* getDoorByChar(char doorChar);
+	SwitchBoard::SwitchPad* getSwitchAt(const Point& pos);
+	SwitchState getSwitchState(int id) const;
+	const std::map<int, SwitchState>& getSwitchStates() const { return switchBoard.getStates(); }
+	void toggleSwitchAt(const Point& pos);
+	void setSwitchState(int id, SwitchState state);
+	void registerSwitch(int id, const Point& pos, SwitchState initialState);
 	void initScreenData(int ScreenID);
 	void draw() const;
 	bool isWall(const Point& p) const {

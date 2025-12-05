@@ -23,7 +23,7 @@ Doors::Doors(int id, int destID, const Point& destPos, bool oneWay, bool openFor
 bool Doors::canPlayerPass(const std::vector<Point>& playerKeyPos,
     const std::map<int, SwitchState>& screenSwitchStates) const
 {
-    if (isCurrentlyOpen && isOpenForever) {
+    if (isCurrentlyOpen) {
         return true;
     }
     for (const Point& requiredPos : requiredKeyPos) {

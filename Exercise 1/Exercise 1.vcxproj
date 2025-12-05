@@ -134,6 +134,7 @@
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Point.cpp" />
     <ClCompile Include="screen.cpp" />
+    <ClCompile Include="SwitchBoard.cpp" />
     <ClCompile Include="SwitchState.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
@@ -144,6 +145,7 @@
     <ClInclude Include="Player.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="screen.h" />
+    <ClInclude Include="SwitchBoard.h" />
     <ClInclude Include="SwitchState.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>

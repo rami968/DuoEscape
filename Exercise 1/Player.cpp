@@ -38,7 +38,8 @@ void Player::move() {
 		return; 
 	}
 	ticksUntilNextMove = MOVE_TICK_INTERVAL;
-	p.draw(' ');
+	char backgroundChar = theScreen->getCharAt(p);
+	p.draw(backgroundChar);
 	Point p_orig = p;
 	p.move();
 	if (theScreen->isWall(p)) {
@@ -48,12 +49,22 @@ void Player::move() {
 		char targetChar = theScreen->getCharAt(p);
 		Doors* currentDoor = theScreen->getDoorByChar(targetChar);
 		if (currentDoor != nullptr) {
-			char playerChar  = p.getChar();
-			// teleport player to the door's destination but keep its glyph
+			const auto& switchStates = theScreen->getSwitchStates();
+			if (!currentDoor->canPlayerPass(collectedKeys, switchStates)) {
+				p = p_orig;
+			}
+			else {
+				currentDoor->openDoor(collectedKeys);
+				if (heldElement == 'K' && !hasKeyInInventory(heldElementPos)) {
+					heldElement = ' ';
+				}
+				char playerChar = p.getChar();
+				// teleport player to the door's destination but keep its glyph
 	   p = currentDoor->getDestinationPosition();
 	   p.setChar(playerChar);
 	   p.setDirection(Direction::STAY);
 	   currDoor = currentDoor;
+			}
 		}
 		else {
 		   p = p_orig;
@@ -61,7 +72,10 @@ void Player::move() {
 	}
 	
 	else if (theScreen->isSwitchOff(p) || theScreen->isSwitchOn(p)) {
-		p = p_orig;
+		bool steppedOntoSwitch = (p.getX() != p_orig.getX()) || (p.getY() != p_orig.getY());
+		if (steppedOntoSwitch) {
+			theScreen->toggleSwitchAt(p);
+		}
 	}
 	else if (theScreen->isKey(p)) {
 		char elemChar = theScreen->getCharAt(p);
@@ -90,6 +104,9 @@ void Player::pickUpElement(char element, const Point& pos)
 {
 	heldElement = element;
 	heldElementPos = pos;
+	if (element == 'K') {
+		collectedKeys.push_back(pos);
+	}
 }
 
 
@@ -107,5 +124,27 @@ void Player::disposeElement() {
 		return;
 	}
 	theScreen->setCharAt(elementDropPos, heldElement);
+	if (heldElement == 'K') {
+		removeKeyFromInventory(heldElementPos);
+	}
 	heldElement = ' ';
 };
+
+bool Player::hasKeyInInventory(const Point& keyPos) const {
+	for (const auto& storedKey : collectedKeys) {
+		if (storedKey.getX() == keyPos.getX() && storedKey.getY() == keyPos.getY()) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Player::removeKeyFromInventory(const Point& keyPos) {
+	for (auto it = collectedKeys.begin(); it != collectedKeys.end(); ++it) {
+		if (it->getX() == keyPos.getX() && it->getY() == keyPos.getY()) {
+			collectedKeys.erase(it);
+			return true;
+		}
+	}
+	return false;
+}

@@ -1,13 +1,9 @@
 #pragma once
 
 #include "Point.h" 
+#include "SwitchState.h" 
 #include <vector>  
 #include <map>     
-
-enum class SwitchState {
-    OFF,
-    ON
-};
 
 class Doors {
     int doorID;
