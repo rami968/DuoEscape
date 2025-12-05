@@ -135,7 +135,6 @@
     <ClCompile Include="Point.cpp" />
     <ClCompile Include="screen.cpp" />
     <ClCompile Include="SwitchBoard.cpp" />
-    <ClCompile Include="SwitchState.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
