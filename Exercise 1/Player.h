@@ -11,7 +11,7 @@ class Player {
 	char the_keys[NUM_KEYS];
 	Point p;
 	Doors* currDoor = nullptr;
-	screen& theScreen;
+	screen* theScreen;
 	Point heldElementPos;
 	char heldElement = ' ';
 	
@@ -24,9 +24,13 @@ public:
 	char getHeldElement() const;
 	Point getHeldElementPos() const;
 	bool hasElement() const;
-	bool hasKey() const;
 	void pickUpElement(char element, const Point& pos);
 	Doors* getTransitionDoor() const { return currDoor; }
 	void resetTransitionSignal() { currDoor = nullptr; }
 	void setPosition(const Point& newPos);
+	void setScreen(screen* newScreen) {
+		theScreen = newScreen;
+	}
+
+
 };

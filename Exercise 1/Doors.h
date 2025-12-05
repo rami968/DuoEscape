@@ -30,7 +30,7 @@ public:
 
     int getDestinationScreenID() const { return destinationScreenID; }
     const Point& getDestinationPosition() { return destinationPosition; }
-    char getDisplayChar() const { return isCurrentlyOpen ? ' ' : (char)('0' + doorID); }
+    char getDisplayChar() const { return (char)('0' + doorID); }
     bool getIsOneWay() const { return isOneWay; }
     const std::vector<Point>& getRequiredKeys() const { return requiredKeyPos; }
 };

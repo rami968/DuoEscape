@@ -20,8 +20,11 @@ GameManager::GameManager() {
 void GameManager::changeScreen(int newScreenID, const Point& destinationPos, Player& p1, Player& p2) {
 	if (newScreenID >= 0 && newScreenID < screens.size()) {
 		currentScreenID = newScreenID;
+		screen& currentScreen = getCurrentScreen();
 		getCurrentScreen().initScreenData(currentScreenID);
 		getCurrentScreen().draw();
+		p1.setScreen(&currentScreen);
+		p2.setScreen(&currentScreen);
 		p1.setPosition(destinationPos);
 		p2.setPosition(destinationPos);
 		p1.draw();
@@ -31,9 +34,8 @@ void GameManager::changeScreen(int newScreenID, const Point& destinationPos, Pla
 void GameManager::run() {
 	// Main game loop would go here
 	hideCursor();
-	screen screen;
-	screen.initScreenData(0);
-	screen.draw();
+	screens[0].initScreenData(0);
+	screens[0].draw();
 	Player player1 = Player(Point(10, 10, 1, 0, '$'), "wdxase", screens[0]);
 	Player player2 = Player(Point(15, 5, 0, 1, '&'), "ilmjko", screens[0]);
 	Player* players[] = { &player1, &player2 };
