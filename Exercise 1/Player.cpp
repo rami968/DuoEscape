@@ -2,7 +2,6 @@
 #include "Point.h"
 #include <cctype>
 #include <cstring>
-#include <map>
 #include "Doors.h"
 #include "BombHelper.h"
 
@@ -59,8 +58,8 @@ void Player::move() {
 		char targetChar = theScreen->getCharAt(p);
 		Doors* currentDoor = theScreen->getDoorByChar(targetChar);
 		if (currentDoor != nullptr) {
-			const auto& switchStates = theScreen->getSwitchStates();
-			if (!currentDoor->canPlayerPass(collectedKeys, switchStates)) {
+			const SwitchBoard& switchBoard = theScreen->getSwitchBoard();
+			if (!currentDoor->canPlayerPass(collectedKeys, switchBoard)) {
 				p = p_orig;
 			}
 			else {

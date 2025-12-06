@@ -1,23 +1,27 @@
 #include "BombHelper.h"
 
-namespace BombHelper {
-	static std::queue<Point> g_pending;
+Point BombHelper::bombSlots[MAX_PENDING_BOMBS]{};
+size_t BombHelper::bombCount = 0;
 
-	void queueBomb(const Point& pos) {
-		g_pending.push(pos);
-	}
+void BombHelper::queueBomb(const Point& pos) {
+    if (bombCount >= MAX_PENDING_BOMBS) {
+        return;
+    }
+    bombSlots[bombCount++] = pos;
+}
 
-	bool tryPopNext(Point& out) {
-		if (g_pending.empty()) {
-			return false;
-		}
-		out = g_pending.front();
-		g_pending.pop();
-		return true;
-	}
+bool BombHelper::tryPopNext(Point& out) {
+    if (bombCount == 0) {
+        return false;
+    }
+    out = bombSlots[0];
+    for (size_t i = 1; i < bombCount; ++i) {
+        bombSlots[i - 1] = bombSlots[i];
+    }
+    --bombCount;
+    return true;
+}
 
-	void clear() {
-		std::queue<Point> empty;
-		std::swap(g_pending, empty);
-	}
+void BombHelper::clear() {
+    bombCount = 0;
 }

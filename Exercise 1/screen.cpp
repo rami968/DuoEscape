@@ -82,11 +82,14 @@ void screen::initScreenData(int id) {
         }
         registerSwitch(0, Point(5, 10, 0, 0, '/'), SwitchState::OFF);
         registerSwitch(1, Point(20, 10, 0, 0, '/'), SwitchState::OFF);
-        std::map<int, SwitchState> doorSwitchReq = {
+        const Doors::SwitchRequirement doorSwitchReq[] = {
             {0, SwitchState::ON},
             {1, SwitchState::ON}
         };
-        doors.push_back(Doors(1, 1, Point(10, 14, 0, 0, ' '), false, false, {}, doorSwitchReq));
+        const size_t doorSwitchReqCount = sizeof(doorSwitchReq) / sizeof(doorSwitchReq[0]);
+        doors.emplace_back(1, 1, Point(10, 14, 0, 0, ' '), false, false,
+            nullptr, 0,
+            doorSwitchReq, doorSwitchReqCount);
         setCharAt(Point(25, 11, 0, 0, ' '), '@');
         setCharAt(Point(55, 18, 0, 0, ' '), '@');
         setCharAt(Point(14, 12, 0, 0, ' '), '!');
@@ -204,7 +207,7 @@ void screen:: setCharAt(const Point& pos, char ch)
     mapData[pos.getY()][pos.getX()] = ch;
 }
 
-SwitchBoard::SwitchPad* screen::getSwitchAt(const Point& pos) {
+SwitchBoard::SwitchEntry* screen::getSwitchAt(const Point& pos) {
     return switchBoard.getSwitchAt(pos);
 }
 
@@ -217,7 +220,7 @@ void screen::setSwitchState(int id, SwitchState state) {
         return;
     }
     if (auto* sw = switchBoard.getSwitchById(id)) {
-        setCharAt(sw->position, switchStateToChar(state));
+        setCharAt(sw->location, switchStateToChar(state));
     }
 }
 

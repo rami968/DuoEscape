@@ -1,30 +1,32 @@
 #pragma once
 
-#include <vector>
-#include <map>
+#include <cstddef>
 #include "Point.h"
 #include "SwitchState.h"
 
 class SwitchBoard {
 public:
-    struct SwitchPad {
-        int id = -1;
-        Point position;
+    static constexpr size_t MAX_SWITCHES = 10;
+
+    struct SwitchEntry {
+        int switchId = -1;
+        Point location;
+        SwitchState currentState = SwitchState::OFF;
     };
 
 private:
-    std::vector<SwitchPad> pads;
-    std::map<int, SwitchState> states;
+    SwitchEntry entries[MAX_SWITCHES]{};
+    size_t switchCount = 0;
 
 public:
     void clear();
     void registerSwitch(int id, const Point& pos, SwitchState initialState);
-    SwitchPad* getSwitchAt(const Point& pos);
-    const SwitchPad* getSwitchAt(const Point& pos) const;
-    SwitchPad* getSwitchById(int id);
-    const SwitchPad* getSwitchById(int id) const;
+    SwitchEntry* getSwitchAt(const Point& pos);
+    const SwitchEntry* getSwitchAt(const Point& pos) const;
+    SwitchEntry* getSwitchById(int id);
+    const SwitchEntry* getSwitchById(int id) const;
     SwitchState getState(int id) const;
     bool setState(int id, SwitchState state);
     bool toggleAt(const Point& pos, SwitchState& outState);
-    const std::map<int, SwitchState>& getStates() const { return states; }
+    size_t getRegisteredSwitchCount() const { return switchCount; }
 };
