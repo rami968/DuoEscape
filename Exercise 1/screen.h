@@ -4,6 +4,7 @@
 #include "Doors.h"
 #include "SwitchState.h"
 #include "SwitchBoard.h"
+#include "Riddle.h"
 #include <vector>
 
 using std::cout, std::endl;
@@ -15,17 +16,18 @@ private:
 	int currentScreenID = 0;
 	char mapData[MAX_Y][MAX_X + 1];
 	std::vector<Doors> doors;
+	std::vector<Riddle> riddles;
 	SwitchBoard switchBoard;
 	bool torchLit = false;
 	bool darkMask[MAX_Y][MAX_X] = { false };
 	void clearDarkMask();
-
 public:
 	screen(int id = 0) { initScreenData(id); }
 	char getCharAt(const Point& p) const {
 		return mapData[p.getY()][p.getX()];
 	}
 	Doors* getDoorByChar(char doorChar);
+	Riddle* getRiddleByPosition(const Point& p);
 	SwitchBoard::SwitchEntry* getSwitchAt(const Point& pos);
 	SwitchState getSwitchState(int id) const;
 	const SwitchBoard& getSwitchBoard() const { return switchBoard; }

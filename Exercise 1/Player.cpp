@@ -69,17 +69,18 @@ void Player::move() {
 				}
 				char playerChar = p.getChar();
 				// teleport player to the door's destination but keep its glyph
-	   p = currentDoor->getDestinationPosition();
-	   p.setChar(playerChar);
-	   p.setDirection(Direction::STAY);
-	   currDoor = currentDoor;
-	   awaitingScreenTransition = true;
-	   ticksUntilNextMove = 0;
-	   return;
+	            p = currentDoor->getDestinationPosition();
+	            p.setChar(playerChar);
+	            p.setDirection(Direction::STAY);
+	            currDoor = currentDoor;
+	            awaitingScreenTransition = true;
+	            ticksUntilNextMove = 0;
+	            return;
 			}
 		}
 		else {
-		   p = p_orig;
+			p = p_orig;
+			}
 		}
 	}
 	
@@ -99,6 +100,11 @@ void Player::move() {
 	}
 	else if (theScreen->isRiddle(p)) {
 		p = p_orig;
+		Riddle* currentRiddle = theScreen->getRiddleByPosition(Point(13, 23, 0, 0, '?'));
+		if (currentRiddle) {
+			setActiveRiddle(currentRiddle);
+		}
+
 	}
 	if (!awaitingScreenTransition) {
 		p.draw();

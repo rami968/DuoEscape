@@ -19,15 +19,15 @@ public:
 
 private:
     int doorID;
-    bool isCurrentlyOpen = false; 
-    bool isOpenForever;           
+    bool isCurrentlyOpen = false;
+    bool isOpenForever;
     Point requiredKeyPos[MAX_REQUIRED_KEYS]{};
     size_t requiredKeyCount = 0;
     SwitchRequirement switchRequirements[MAX_REQUIRED_SWITCHES]{};
     size_t requiredSwitchCount = 0;
-    int destinationScreenID;      
-    Point destinationPosition;    
-    bool isOneWay;                
+    int destinationScreenID;
+    Point destinationPosition;
+    bool isOneWay;
 
 public:
     Doors(int id, int destID, const Point& destPos, bool oneWay, bool openForever,

@@ -44,31 +44,31 @@ void screen::initScreenData(int id) {
     currentScreenID = id;
     if (currentScreenID == 0) {
         char Screen1[MAX_Y][MAX_X + 1] = {
-            //   01234567890123456789012345678901234567890123456789012345678901234567890123456789
+       //01234567890123456789012345678901234567890123456789012345678901234567890123456789
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
-        "W####                                                                  #    ###W", // 1
-        "W####                                                                  #    ###W", // 2
-        "W####                                                                  #    ###W", // 3
-        "W####                                                                  #    ###W", // 4
-        "W####                                                                  #    ###W", // 5
-        "W####                                                                  #    ###W", // 6
-        "W####                                                                  #    ###W", // 7
-        "W####               WWWWWWWWW                                               ###W", // 8
-        "W####               #########                                               ###W", // 9
-        "W                                                                              W", // 10
-        "W                                                                              W", // 11
-        "W                                                                           ###W", // 12
-        "W                                                                              W", // 13
-        "W                                                                              1", // 14
-        "W                                                                              W", // 15
+        "W                 W                                                            W", // 1
+        "W                 W                                                            W", // 2
+        "W                                                                              W", // 3
+        "W                 W                                                            W", // 4
+        "W                 W                                                            W", // 5
+        "W                 W                                                            W", // 6
+        "W                 W                                                            W", // 7
+        "W                 W                                                            W", // 8
+        "W                 W                                                            W", // 9
+        "W                 W                                                            W", // 10
+        "W                 W                                                            W", // 11
+        "W                 W                                                            W", // 12
+        "W                 W                                                            W", // 13
+        "W                 W                                                            3", // 14
+        "WWWWWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 15
         "W                                                                              W", // 16
         "W                                                                              W", // 17
         "W                                                                              W", // 18
         "W                                                                              W", // 19
-        "W                                                                              W", // 20
-        "W                                                                              W", // 21
-        "W                                                                              W", // 22
-        "W                                                                              W", // 23
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW W", // 20
+        "W            W                             W                                   W", // 21
+        "W            W             W               W                                   W", // 22
+        "W            ?             W               1                                   W", // 23
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"  // 24
         };
         for (int i = 0; i < MAX_Y; ++i) {
@@ -76,6 +76,8 @@ void screen::initScreenData(int id) {
         }
         registerSwitch(0, Point(5, 10, 0, 0, '/'), SwitchState::OFF);
         registerSwitch(1, Point(20, 10, 0, 0, '/'), SwitchState::OFF);
+        riddles.clear();
+		riddles.push_back(Riddle(0, Point(13, 23, 0, 0, '?'), "What has keys but can't open locks?", "Keyboard"));
         const Doors::SwitchRequirement doorSwitchReq[] = {
             {0, SwitchState::ON},
             {1, SwitchState::ON}
@@ -101,18 +103,18 @@ void screen::initScreenData(int id) {
     else if (currentScreenID == 1) {
         char Screen2[MAX_Y][MAX_X + 1] = {
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
-        "W####                                                                  #    ###W", // 1
-        "W####                                                                  #    ###W", // 2
-        "W####                                                                  #    ###W", // 3
-        "W####                                                                  #    ###W", // 4
-        "W####                                                                  #    ###W", // 5
-        "W####                                                                  #    ###W", // 6
-        "W####                                                                  #    ###W", // 7
-        "W####               WWWWWWWWW                                               ###W", // 8
-        "W####               #########                                               ###W", // 9
+        "W                                                                              W", // 1
+        "W                                                                              6", // 2
+        "W                                                                              W", // 3
+        "W                                                                              W", // 4
+        "W                                                                              W", // 5
+        "W                                                                              W", // 6
+        "W                                                                              W", // 7
+        "W                                                                              W", // 8
+        "W                                                                              W", // 9
         "W                                                                              W", // 10
         "W                                                                              W", // 11
-        "W                                                                           ###W", // 12
+        "W                                                                              W", // 12
         "W                                                                              W", // 13
         "W                                                                              W", // 14
         "W                                                                              W", // 15
@@ -146,20 +148,20 @@ void screen::initScreenData(int id) {
     else {
         char EndScreen[MAX_Y][MAX_X + 1] = {
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
-        "W####                                                                  #    ###W", // 1
-        "W####                                                                  #    ###W", // 2
-        "W####                                                                  #    ###W", // 3
-        "W####                                                                  #    ###W", // 4
-        "W####                                                                  #    ###W", // 5
-        "W####                                                                  #    ###W", // 6
-        "W####                                                                  #    ###W", // 7
-        "W####               WWWWWWWWW                                               ###W", // 8
-        "W####               #########                                               ###W", // 9
+        "W                                                                              W", // 1
+        "W                                                                              W", // 2
+        "W                                                                              W", // 3
+        "W                                                                              W", // 4
+        "W                                                                              W", // 5
+        "W                                                                              W", // 6
+        "W                                                                              W", // 7
+        "W                                                                              W", // 8
+        "W                                                                              W", // 9
         "W                                                                              W", // 10
         "W                                                                              W", // 11
-        "W                                                                           ###W", // 12
+        "W                                                                              W", // 12
         "W                                                                              W", // 13
-        "W                             the end                                          W", // 14
+        "W                                                                              W", // 14
         "W                                                                              W", // 15
         "W                                                                              W", // 16
         "W                                                                              W", // 17
@@ -194,6 +196,16 @@ Doors* screen::getDoorByChar(char doorChar) {
         }
     }
     return nullptr;
+}
+
+Riddle* screen::getRiddleByPosition(const Point& p) {
+	for (auto& riddle : riddles) {
+		if (riddle.getPosition().getX() == p.getX() &&
+			riddle.getPosition().getY() == p.getY()) {
+			return &riddle;
+		}
+	}
+	return nullptr;
 }
 
 void screen:: setCharAt(const Point& pos, char ch)
@@ -245,4 +257,5 @@ void screen::markDarkArea(int x1, int y1, int x2, int y2) {
 void screen::setTorchLit(bool lit) {
     torchLit = lit;
 }
+
 

@@ -5,6 +5,7 @@
 #include "utils.h"
 #include "Direction.h"
 #include "Point.h"
+#include "Riddle.h"
 #include "screen.h"
 #include "Doors.h"
 
@@ -17,6 +18,7 @@ class Player {
 	bool awaitingScreenTransition = false; // true when player already passed through a door
 	screen* theScreen;
 	Point heldElementPos;
+	Riddle* activeRiddle = nullptr;
 	char heldElement = ' ';
 	int ticksUntilNextMove = 0;
 	std::vector<Point> collectedKeys;
@@ -40,7 +42,9 @@ public:
 	void setScreen(screen* newScreen) {
 		theScreen = newScreen;
 	}
+	Riddle* getActiveRiddle() const { return activeRiddle; }
+	void setActiveRiddle(Riddle* riddle) { activeRiddle = riddle; }
+	void resetActiveRiddle() { activeRiddle = nullptr; }
 	const Point& getPosition() const { return p; }
 	const std::vector<Point>& getCollectedKeys() const { return collectedKeys; }
-
 };

@@ -2,6 +2,7 @@
 
 int main() {
 	GameManager Game;
-	Game.run();
+	Game.showMenuAndHandleInput();
+	//Game.run();
 	return 0;
 }
