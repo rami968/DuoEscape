@@ -6,7 +6,6 @@
 #include "SwitchBoard.h"
 #include "Riddle.h"
 #include <vector>
-#include <map>
 
 using std::cout, std::endl;
 
@@ -19,7 +18,9 @@ private:
 	std::vector<Doors> doors;
 	std::vector<Riddle> riddles;
 	SwitchBoard switchBoard;
-
+	bool torchLit = false;
+	bool darkMask[MAX_Y][MAX_X] = { false };
+	void clearDarkMask();
 public:
 	screen(int id = 0) { initScreenData(id); }
 	char getCharAt(const Point& p) const {
@@ -27,9 +28,9 @@ public:
 	}
 	Doors* getDoorByChar(char doorChar);
 	Riddle* getRiddleByPosition(const Point& p);
-	SwitchBoard::SwitchPad* getSwitchAt(const Point& pos);
+	SwitchBoard::SwitchEntry* getSwitchAt(const Point& pos);
 	SwitchState getSwitchState(int id) const;
-	const std::map<int, SwitchState>& getSwitchStates() const { return switchBoard.getStates(); }
+	const SwitchBoard& getSwitchBoard() const { return switchBoard; }
 	void toggleSwitchAt(const Point& pos);
 	void setSwitchState(int id, SwitchState state);
 	void registerSwitch(int id, const Point& pos, SwitchState initialState);
@@ -50,8 +51,17 @@ public:
 	bool isKey(const Point& p) const {
 		return getCharAt(p) == 'K';
 	}
+	bool isTorch(const Point& p) const {
+		return getCharAt(p) == '!';
+	}
+	bool isBomb(const Point& p) const {
+		return getCharAt(p) == '@';
+	}
 	bool isRiddle(const Point& p) const {
 		return getCharAt(p) == '?';
 	}
 	void setCharAt(const Point& pos, char ch);
+	void markDarkArea(int x1, int y1, int x2, int y2);
+	void setTorchLit(bool lit);
+	bool isTorchLit() const { return torchLit; }
 };

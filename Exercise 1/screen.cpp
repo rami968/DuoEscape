@@ -1,30 +1,52 @@
 #include "screen.h"
 #include "Doors.h"
 #include "point.h"
+#include <algorithm>
 
 namespace {
-    char switchStateToChar(SwitchState state) {
-        return state == SwitchState::ON ? '\\' : '/';
-    }
+char switchStateToChar(SwitchState state) {
+    return state == SwitchState::ON ? '\\' : '/';
+}
 
-    SwitchState flippedState(SwitchState state) {
-        return state == SwitchState::ON ? SwitchState::OFF : SwitchState::ON;
+SwitchState flippedState(SwitchState state) {
+    return state == SwitchState::ON ? SwitchState::OFF : SwitchState::ON;
+}
+}
+
+
+void screen::clearDarkMask() {
+    for (int y = 0; y < MAX_Y; ++y) {
+        for (int x = 0; x < MAX_X; ++x) {
+            darkMask[y][x] = false;
+        }
     }
 }
 
 void screen::draw() const {
-	cls();
-	gotoxy(0, 0);
-	for (size_t i = 0; i < MAX_Y - 1; ++i) {
-		cout << mapData[i] << endl;
-	}
-	cout << mapData[MAX_Y - 1];
-	cout.flush();
+    cls();
+    gotoxy(0, 0);
+    for (int y = 0; y < MAX_Y; ++y) {
+        for (int x = 0; x < MAX_X; ++x) {
+            char ch = mapData[y][x];
+            if (darkMask[y][x] && !torchLit) {
+                cout << ' ';
+            }
+            else {
+                cout << ch;
+            }
+        }
+        if (y < MAX_Y - 1) {
+            cout << endl;
+        }
+    }
+    cout.flush();
 }
 
 void screen::initScreenData(int id) {
     doors.clear();
     switchBoard.clear();
+    clearDarkMask();
+    torchLit = false;
     currentScreenID = id;
     if (currentScreenID == 0) {
         char Screen1[MAX_Y][MAX_X + 1] = {
@@ -60,14 +82,29 @@ void screen::initScreenData(int id) {
         }
         registerSwitch(0, Point(5, 10, 0, 0, '/'), SwitchState::OFF);
         registerSwitch(1, Point(20, 10, 0, 0, '/'), SwitchState::OFF);
-        std::map<int, SwitchState> doorSwitchReq = {
+        riddles.clear();
+		riddles.push_back(Riddle(0, Point(13, 23, 0, 0, '?'), "What has keys but can't open locks?", "Keyboard"));
+        const Doors::SwitchRequirement doorSwitchReq[] = {
             {0, SwitchState::ON},
             {1, SwitchState::ON}
         };
-        riddles.clear();
-		riddles.push_back(Riddle(0, Point(13, 23, 0, 0, '?'), "What has keys but can't open locks?", "Keyboard"));
-        doors.push_back(Doors(3, 1, Point(10, 14, 0, 0, ' '), false, false, {}, doorSwitchReq));
-		doors.push_back(Doors(1, 0, Point(43, 23, 0, 0, ' '), false, false, {}, {}));
+        const size_t doorSwitchReqCount = sizeof(doorSwitchReq) / sizeof(doorSwitchReq[0]);
+        doors.emplace_back(1, 1, Point(10, 14, 0, 0, ' '), false, false,
+            nullptr, 0,
+            doorSwitchReq, doorSwitchReqCount);
+        setCharAt(Point(25, 11, 0, 0, ' '), '@');
+        setCharAt(Point(55, 18, 0, 0, ' '), '@');
+        setCharAt(Point(14, 12, 0, 0, ' '), '!');
+        for (int x = 18; x <= 26; ++x) {
+            setCharAt(Point(x, 10, 0, 0, '#'), '#');
+        }
+        for (int x = 32; x <= 40; ++x) {
+            setCharAt(Point(x, 19, 0, 0, '#'), '#');
+        }
+        for (int y = 6; y <= 16; ++y) {
+            setCharAt(Point(45, y, 0, 0, 'W'), 'W');
+        }
+        markDarkArea(50, 8, 75, 20);
     }
     else if (currentScreenID == 1) {
         char Screen2[MAX_Y][MAX_X + 1] = {
@@ -101,6 +138,18 @@ void screen::initScreenData(int id) {
             strcpy_s(mapData[i], MAX_X + 1, Screen2[i]);
 		}
         registerSwitch(2, Point(30, 12, 0, 0, '/'), SwitchState::OFF);
+        setCharAt(Point(40, 15, 0, 0, ' '), '@');
+        setCharAt(Point(20, 8, 0, 0, ' '), '!');
+        for (int x = 10; x <= 19; ++x) {
+            setCharAt(Point(x, 6, 0, 0, '#'), '#');
+        }
+        for (int x = 25; x <= 34; ++x) {
+            setCharAt(Point(x, 17, 0, 0, '#'), '#');
+        }
+        for (int y = 5; y <= 15; ++y) {
+            setCharAt(Point(60, y, 0, 0, 'W'), 'W');
+        }
+        markDarkArea(15, 5, 35, 18);
     }
     else {
         char EndScreen[MAX_Y][MAX_X + 1] = {
@@ -133,6 +182,17 @@ void screen::initScreenData(int id) {
 		for (int i = 0; i < MAX_Y; ++i) {
             strcpy_s(mapData[i], MAX_X + 1, EndScreen[i]);
 		}
+		setCharAt(Point(30, 14, 0, 0, ' '), '!');
+        for (int x = 35; x <= 45; ++x) {
+            setCharAt(Point(x, 11, 0, 0, '#'), '#');
+        }
+        for (int x = 5; x <= 15; ++x) {
+            setCharAt(Point(x, 20, 0, 0, '#'), '#');
+        }
+        for (int y = 8; y <= 18; ++y) {
+            setCharAt(Point(50, y, 0, 0, 'W'), 'W');
+        }
+		markDarkArea(25, 10, 55, 20);
     }
 }
 Doors* screen::getDoorByChar(char doorChar) {
@@ -159,7 +219,7 @@ void screen:: setCharAt(const Point& pos, char ch)
     mapData[pos.getY()][pos.getX()] = ch;
 }
 
-SwitchBoard::SwitchPad* screen::getSwitchAt(const Point& pos) {
+SwitchBoard::SwitchEntry* screen::getSwitchAt(const Point& pos) {
     return switchBoard.getSwitchAt(pos);
 }
 
@@ -172,7 +232,7 @@ void screen::setSwitchState(int id, SwitchState state) {
         return;
     }
     if (auto* sw = switchBoard.getSwitchById(id)) {
-        setCharAt(sw->position, switchStateToChar(state));
+        setCharAt(sw->location, switchStateToChar(state));
     }
 }
 
@@ -187,3 +247,21 @@ void screen::registerSwitch(int id, const Point& pos, SwitchState initialState) 
     switchBoard.registerSwitch(id, pos, initialState);
     setCharAt(pos, switchStateToChar(initialState));
 }
+
+void screen::markDarkArea(int x1, int y1, int x2, int y2) {
+    int left = std::max(0, std::min(x1, x2));
+    int right = std::min(MAX_X - 1, std::max(x1, x2));
+    int top = std::max(0, std::min(y1, y2));
+    int bottom = std::min(MAX_Y - 1, std::max(y1, y2));
+    for (int y = top; y <= bottom; ++y) {
+        for (int x = left; x <= right; ++x) {
+            darkMask[y][x] = true;
+        }
+    }
+}
+
+void screen::setTorchLit(bool lit) {
+    torchLit = lit;
+}
+
+

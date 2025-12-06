@@ -7,13 +7,15 @@
 #include "Point.h"
 #include "Riddle.h"
 #include "screen.h"
+#include "Doors.h"
 
 class Player {
 	static constexpr int NUM_KEYS = 6;
-	static constexpr int MOVE_TICK_INTERVAL = 2;
+	static constexpr int MOVE_TICK_INTERVAL = 4; // number of game loops to wait between moves
 	char the_keys[NUM_KEYS];
 	Point p;
 	Doors* currDoor = nullptr;
+	bool awaitingScreenTransition = false; // true when player already passed through a door
 	screen* theScreen;
 	Point heldElementPos;
 	Riddle* activeRiddle = nullptr;
@@ -22,25 +24,27 @@ class Player {
 	std::vector<Point> collectedKeys;
 	bool hasKeyInInventory(const Point& keyPos) const;
 	bool removeKeyFromInventory(const Point& keyPos);
-	
 public:
 	Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen);
 	void disposeElement();
-	void handleKeyPressed(char key);
+	void handleKeyPressed(char key_pressed);
 	void move();
 	void draw();
 	char getHeldElement() const;
 	Point getHeldElementPos() const;
 	bool hasElement() const;
+	bool hasTorch() const;
 	void pickUpElement(char element, const Point& pos);
 	Doors* getTransitionDoor() const { return currDoor; }
-	void resetTransitionSignal() { currDoor = nullptr; }
+	bool isAwaitingTransition() const { return awaitingScreenTransition; }
+	void resetTransitionSignal();
 	void setPosition(const Point& newPos);
 	void setScreen(screen* newScreen) {
 		theScreen = newScreen;
 	}
-	const std::vector<Point>& getCollectedKeys() const { return collectedKeys; }
 	Riddle* getActiveRiddle() const { return activeRiddle; }
 	void setActiveRiddle(Riddle* riddle) { activeRiddle = riddle; }
 	void resetActiveRiddle() { activeRiddle = nullptr; }
+	const Point& getPosition() const { return p; }
+	const std::vector<Point>& getCollectedKeys() const { return collectedKeys; }
 };

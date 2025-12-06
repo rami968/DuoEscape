@@ -1,25 +1,33 @@
 #pragma once
 
 #include "Point.h" 
-#include <vector>  
-#include <map>     
+#include "SwitchState.h" 
+#include <vector>
+#include <cstddef>
 
-enum class SwitchState {
-    OFF,
-    ON
-};
+class SwitchBoard;
+
+class Doors {
+public:
+    static constexpr size_t MAX_REQUIRED_KEYS = 4;
+    static constexpr size_t MAX_REQUIRED_SWITCHES = 4;
+
+    struct SwitchRequirement {
+        int switchId = -1;
+        SwitchState requiredState = SwitchState::OFF;
+    };
 
 private:
     int doorID;
-    bool isCurrentlyOpen = false; 
-    bool isOpenForever;           
+    bool isCurrentlyOpen = false;
+    bool isOpenForever;
     Point requiredKeyPos[MAX_REQUIRED_KEYS]{};
     size_t requiredKeyCount = 0;
     SwitchRequirement switchRequirements[MAX_REQUIRED_SWITCHES]{};
     size_t requiredSwitchCount = 0;
-    int destinationScreenID;      
-    Point destinationPosition;    
-    bool isOneWay;                
+    int destinationScreenID;
+    Point destinationPosition;
+    bool isOneWay;
 
 public:
     Doors(int id, int destID, const Point& destPos, bool oneWay, bool openForever,

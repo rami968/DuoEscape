@@ -2,8 +2,8 @@
 #include "Point.h"
 #include <cctype>
 #include <cstring>
-#include <map>
 #include "Doors.h"
+#include "BombHelper.h"
 
 Player::Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen) :
 	theScreen(&screen) {
@@ -13,12 +13,14 @@ Player::Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& scre
 }
 
 void Player::handleKeyPressed(char key_pressed) {
+	if (awaitingScreenTransition) {
+		return;
+	}
 	char lk = std::tolower(key_pressed);
 	if (lk == 'e' || lk == 'o') {
 		disposeElement();
 		return;
 	}
-
 	for (size_t index = 0; index < NUM_KEYS; ++index) {
 		char k = the_keys[index];
 		if (k == lk) {
@@ -29,13 +31,20 @@ void Player::handleKeyPressed(char key_pressed) {
 }
 
 void Player::draw() {
+	if (awaitingScreenTransition) {
+		return;
+	}
 	p.draw();
 }
 
 void Player::move() {
+	if (awaitingScreenTransition) {
+		return;
+	}
+	// function by copylot 
 	if (ticksUntilNextMove > 0) {
 		--ticksUntilNextMove;
-		return;
+		return; 
 	}
 	ticksUntilNextMove = MOVE_TICK_INTERVAL;
 	char backgroundChar = theScreen->getCharAt(p);
@@ -49,8 +58,8 @@ void Player::move() {
 		char targetChar = theScreen->getCharAt(p);
 		Doors* currentDoor = theScreen->getDoorByChar(targetChar);
 		if (currentDoor != nullptr) {
-			const auto& switchStates = theScreen->getSwitchStates();
-			if (!currentDoor->canPlayerPass(collectedKeys, switchStates)) {
+			const SwitchBoard& switchBoard = theScreen->getSwitchBoard();
+			if (!currentDoor->canPlayerPass(collectedKeys, switchBoard)) {
 				p = p_orig;
 			}
 			else {
@@ -59,25 +68,29 @@ void Player::move() {
 					heldElement = ' ';
 				}
 				char playerChar = p.getChar();
-			// teleport player to the door's destination but keep its glyph
-				p = currentDoor->getDestinationPosition();
-				p.setChar(playerChar);
-				p.setDirection(Direction::STAY);
-				currDoor = currentDoor;
+				// teleport player to the door's destination but keep its glyph
+	            p = currentDoor->getDestinationPosition();
+	            p.setChar(playerChar);
+	            p.setDirection(Direction::STAY);
+	            currDoor = currentDoor;
+	            awaitingScreenTransition = true;
+	            ticksUntilNextMove = 0;
+	            return;
 			}
 		}
 		else {
-			bool steppedOntoSwitch = (p.getX() != p_orig.getX()) || (p.getY() != p_orig.getY());
-			if (steppedOntoSwitch) {
-				theScreen->toggleSwitchAt(p);
+			p = p_orig;
 			}
 		}
 	}
 	
 	else if (theScreen->isSwitchOff(p) || theScreen->isSwitchOn(p)) {
-		p = p_orig;
+		bool steppedOntoSwitch = (p.getX() != p_orig.getX()) || (p.getY() != p_orig.getY());
+		if (steppedOntoSwitch) {
+			theScreen->toggleSwitchAt(p);
+		}
 	}
-	else if (theScreen->isKey(p)) {
+	else if (theScreen->isKey(p) || theScreen->isBomb(p) || theScreen->isTorch(p)) {
 		char elemChar = theScreen->getCharAt(p);
 		pickUpElement(elemChar, p);
 		theScreen->setCharAt(p, ' ');
@@ -93,7 +106,9 @@ void Player::move() {
 		}
 
 	}
-	p.draw();
+	if (!awaitingScreenTransition) {
+		p.draw();
+	}
 }
 
 void Player::setPosition(const Point& newPos) {
@@ -105,6 +120,7 @@ void Player::setPosition(const Point& newPos) {
 char Player::getHeldElement() const { return heldElement; }
 Point Player::getHeldElementPos() const { return heldElementPos; }
 bool Player::hasElement() const { return heldElement != ' '; }
+bool Player::hasTorch() const { return heldElement == '!'; }
 void Player::pickUpElement(char element, const Point& pos)
 {
 	heldElement = element;
@@ -114,10 +130,21 @@ void Player::pickUpElement(char element, const Point& pos)
 	}
 }
 
+void Player::resetTransitionSignal() {
+	currDoor = nullptr;
+	awaitingScreenTransition = false;
+	ticksUntilNextMove = 0;
+}
+
 
 void Player::disposeElement() {
 	if (heldElement == ' ')
 		return;
+	if (heldElement == '@') {
+		BombHelper::queueBomb(p);
+		heldElement = ' ';
+		return;
+	}
 	Point elementDropPos = p;
 	elementDropPos.move();
 
