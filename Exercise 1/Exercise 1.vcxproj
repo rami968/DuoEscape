@@ -137,6 +137,7 @@
     <ClCompile Include="screen.cpp" />
     <ClCompile Include="SwitchBoard.cpp" />
     <ClCompile Include="utils.cpp" />
+    <ClCompile Include="BombHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Direction.h" />
@@ -149,6 +150,7 @@
     <ClInclude Include="SwitchBoard.h" />
     <ClInclude Include="SwitchState.h" />
     <ClInclude Include="utils.h" />
+    <ClInclude Include="BombHelper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

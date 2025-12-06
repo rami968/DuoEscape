@@ -1,18 +1,31 @@
 #include "Doors.h"
-#include <iostream>
+#include "SwitchBoard.h"
 
 
 Doors::Doors(int id, int destID, const Point& destPos, bool oneWay, bool openForever,
-    const std::vector<Point>& keys, const std::map<int, SwitchState>& switches): 
+    const Point* keys, size_t keyCount,
+    const SwitchRequirement* switches, size_t switchCount): 
     doorID(id),
     destinationScreenID(destID),
     destinationPosition(destPos),
     isOneWay(oneWay),
-    isOpenForever(openForever),
-    requiredKeyPos(keys),
-    requiredSwitches(switches)
+    isOpenForever(openForever)
 {
-    if (requiredKeyPos.empty() && requiredSwitches.empty()) {
+    if (keys && keyCount > 0) {
+        requiredKeyCount = (keyCount < MAX_REQUIRED_KEYS) ? keyCount : MAX_REQUIRED_KEYS;
+        for (size_t i = 0; i < requiredKeyCount; ++i) {
+            requiredKeyPos[i] = keys[i];
+        }
+    }
+
+    if (switches && switchCount > 0) {
+        requiredSwitchCount = (switchCount < MAX_REQUIRED_SWITCHES) ? switchCount : MAX_REQUIRED_SWITCHES;
+        for (size_t i = 0; i < requiredSwitchCount; ++i) {
+            switchRequirements[i] = switches[i];
+        }
+    }
+
+    if (requiredKeyCount == 0 && requiredSwitchCount == 0) {
         isCurrentlyOpen = true;
     }
     else {
@@ -21,12 +34,13 @@ Doors::Doors(int id, int destID, const Point& destPos, bool oneWay, bool openFor
 }
 
 bool Doors::canPlayerPass(const std::vector<Point>& playerKeyPos,
-    const std::map<int, SwitchState>& screenSwitchStates) const
+    const SwitchBoard& switchBoard) const
 {
     if (isCurrentlyOpen) {
         return true;
     }
-    for (const Point& requiredPos : requiredKeyPos) {
+    for (size_t i = 0; i < requiredKeyCount; ++i) {
+        const Point& requiredPos = requiredKeyPos[i];
         bool keyFoundInInventory = false;
         for (const Point& heldKeyPos : playerKeyPos) {
             if (heldKeyPos.getX() == requiredPos.getX() &&
@@ -41,13 +55,9 @@ bool Doors::canPlayerPass(const std::vector<Point>& playerKeyPos,
         }
     }
 
-    for (const auto& pair : requiredSwitches) {
-        int requiredSwitchID = pair.first;
-        SwitchState requiredState = pair.second;
-
-        auto it = screenSwitchStates.find(requiredSwitchID);
-
-        if (it == screenSwitchStates.end() || it->second != requiredState) {
+    for (size_t i = 0; i < requiredSwitchCount; ++i) {
+        const SwitchRequirement& requirement = switchRequirements[i];
+        if (switchBoard.getState(requirement.switchId) != requirement.requiredState) {
             return false;
         }
     }
@@ -59,12 +69,13 @@ void Doors::openDoor(std::vector<Point>& playerKeyPos) {
     if (!isCurrentlyOpen) {
         isCurrentlyOpen = true;
 
-        for (const Point& usedKeyPos : requiredKeyPos) {
-            for (size_t i = 0; i < playerKeyPos.size(); ++i) {
-                if (playerKeyPos[i].getX() == usedKeyPos.getX() &&
-                    playerKeyPos[i].getY() == usedKeyPos.getY()) {
-                    if (i != playerKeyPos.size() - 1) {
-                        playerKeyPos[i] = playerKeyPos.back();
+        for (size_t i = 0; i < requiredKeyCount; ++i) {
+            const Point& usedKeyPos = requiredKeyPos[i];
+            for (size_t j = 0; j < playerKeyPos.size(); ++j) {
+                    if (playerKeyPos[j].getX() == usedKeyPos.getX() &&
+                        playerKeyPos[j].getY() == usedKeyPos.getY()) {
+                        if (j != playerKeyPos.size() - 1) {
+                            playerKeyPos[j] = playerKeyPos.back();
                     }
                     playerKeyPos.pop_back();
                     break; 
