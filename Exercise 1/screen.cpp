@@ -1,6 +1,7 @@
 #include "screen.h"
 #include "Doors.h"
 #include "point.h"
+#include <algorithm>
 
 namespace {
 char switchStateToChar(SwitchState state) {
@@ -13,20 +14,39 @@ SwitchState flippedState(SwitchState state) {
 }
 
 
+void screen::clearDarkMask() {
+    for (int y = 0; y < MAX_Y; ++y) {
+        for (int x = 0; x < MAX_X; ++x) {
+            darkMask[y][x] = false;
+        }
+    }
+}
 
 void screen::draw() const {
-	cls();
-	gotoxy(0, 0);
-	for (size_t i = 0; i < MAX_Y - 1; ++i) {
-		cout << mapData[i] << endl;
-	}
-	cout << mapData[MAX_Y - 1];
-	cout.flush();
+    cls();
+    gotoxy(0, 0);
+    for (int y = 0; y < MAX_Y; ++y) {
+        for (int x = 0; x < MAX_X; ++x) {
+            char ch = mapData[y][x];
+            if (darkMask[y][x] && !torchLit) {
+                cout << ' ';
+            }
+            else {
+                cout << ch;
+            }
+        }
+        if (y < MAX_Y - 1) {
+            cout << endl;
+        }
+    }
+    cout.flush();
 }
 
 void screen::initScreenData(int id) {
     doors.clear();
     switchBoard.clear();
+    clearDarkMask();
+    torchLit = false;
     currentScreenID = id;
     if (currentScreenID == 0) {
         char Screen1[MAX_Y][MAX_X + 1] = {
@@ -69,6 +89,8 @@ void screen::initScreenData(int id) {
         doors.push_back(Doors(1, 1, Point(10, 14, 0, 0, ' '), false, false, {}, doorSwitchReq));
         setCharAt(Point(25, 11, 0, 0, ' '), '@');
         setCharAt(Point(55, 18, 0, 0, ' '), '@');
+        setCharAt(Point(60, 12, 0, 0, ' '), '!');
+        markDarkArea(50, 8, 75, 20);
     }
     else if (currentScreenID == 1) {
         char Screen2[MAX_Y][MAX_X + 1] = {
@@ -103,6 +125,8 @@ void screen::initScreenData(int id) {
 		}
         registerSwitch(2, Point(30, 12, 0, 0, '/'), SwitchState::OFF);
         setCharAt(Point(40, 15, 0, 0, ' '), '@');
+        setCharAt(Point(20, 8, 0, 0, ' '), '!');
+        markDarkArea(15, 5, 35, 18);
     }
     else {
         char EndScreen[MAX_Y][MAX_X + 1] = {
@@ -135,6 +159,8 @@ void screen::initScreenData(int id) {
 		for (int i = 0; i < MAX_Y; ++i) {
             strcpy_s(mapData[i], MAX_X + 1, EndScreen[i]);
 		}
+		setCharAt(Point(30, 14, 0, 0, ' '), '!');
+		markDarkArea(25, 10, 55, 20);
     }
 }
 Doors* screen::getDoorByChar(char doorChar) {
@@ -178,5 +204,21 @@ void screen::toggleSwitchAt(const Point& pos) {
 void screen::registerSwitch(int id, const Point& pos, SwitchState initialState) {
     switchBoard.registerSwitch(id, pos, initialState);
     setCharAt(pos, switchStateToChar(initialState));
+}
+
+void screen::markDarkArea(int x1, int y1, int x2, int y2) {
+    int left = std::max(0, std::min(x1, x2));
+    int right = std::min(MAX_X - 1, std::max(x1, x2));
+    int top = std::max(0, std::min(y1, y2));
+    int bottom = std::min(MAX_Y - 1, std::max(y1, y2));
+    for (int y = top; y <= bottom; ++y) {
+        for (int x = left; x <= right; ++x) {
+            darkMask[y][x] = true;
+        }
+    }
+}
+
+void screen::setTorchLit(bool lit) {
+    torchLit = lit;
 }
 

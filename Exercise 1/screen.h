@@ -17,6 +17,9 @@ private:
 	char mapData[MAX_Y][MAX_X + 1];
 	std::vector<Doors> doors;
 	SwitchBoard switchBoard;
+	bool torchLit = false;
+	bool darkMask[MAX_Y][MAX_X] = { false };
+	void clearDarkMask();
 
 public:
 	screen(int id = 0) { initScreenData(id); }
@@ -47,6 +50,9 @@ public:
 	bool isKey(const Point& p) const {
 		return getCharAt(p) == 'K';
 	}
+	bool isTorch(const Point& p) const {
+		return getCharAt(p) == '!';
+	}
 	bool isBomb(const Point& p) const {
 		return getCharAt(p) == '@';
 	}
@@ -54,4 +60,7 @@ public:
 		return getCharAt(p) == '?';
 	}
 	void setCharAt(const Point& pos, char ch);
+	void markDarkArea(int x1, int y1, int x2, int y2);
+	void setTorchLit(bool lit);
+	bool isTorchLit() const { return torchLit; }
 };

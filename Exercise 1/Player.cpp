@@ -90,7 +90,7 @@ void Player::move() {
 			theScreen->toggleSwitchAt(p);
 		}
 	}
-	else if (theScreen->isKey(p) || theScreen->isBomb(p)) {
+	else if (theScreen->isKey(p) || theScreen->isBomb(p) || theScreen->isTorch(p)) {
 		char elemChar = theScreen->getCharAt(p);
 		pickUpElement(elemChar, p);
 		theScreen->setCharAt(p, ' ');
@@ -115,6 +115,7 @@ void Player::setPosition(const Point& newPos) {
 char Player::getHeldElement() const { return heldElement; }
 Point Player::getHeldElementPos() const { return heldElementPos; }
 bool Player::hasElement() const { return heldElement != ' '; }
+bool Player::hasTorch() const { return heldElement == '!'; }
 void Player::pickUpElement(char element, const Point& pos)
 {
 	heldElement = element;

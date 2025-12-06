@@ -31,6 +31,7 @@ public:
 	char getHeldElement() const;
 	Point getHeldElementPos() const;
 	bool hasElement() const;
+	bool hasTorch() const;
 	void pickUpElement(char element, const Point& pos);
 	Doors* getTransitionDoor() const { return currDoor; }
 	bool isAwaitingTransition() const { return awaitingScreenTransition; }

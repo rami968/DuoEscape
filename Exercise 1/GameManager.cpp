@@ -25,8 +25,7 @@ void GameManager::changeScreen(int newScreenID, const Point& destinationPos, Pla
 	if (newScreenID >= 0 && newScreenID < screens.size()) {
 		currentScreenID = newScreenID;
 		screen& currentScreen = getCurrentScreen();
-		getCurrentScreen().initScreenData(currentScreenID);
-		getCurrentScreen().draw();
+		currentScreen.initScreenData(currentScreenID);
 		p1.setScreen(&currentScreen);
 		p2.setScreen(&currentScreen);
 		activeBombs.clear();
@@ -35,6 +34,9 @@ void GameManager::changeScreen(int newScreenID, const Point& destinationPos, Pla
 		p2.resetTransitionSignal();
 		p1.setPosition(destinationPos);
 		p2.setPosition(destinationPos);
+		bool torchActive = p1.hasTorch() || p2.hasTorch();
+		currentScreen.setTorchLit(torchActive);
+		currentScreen.draw();
 		p1.draw();
 		p2.draw();
 	}
@@ -43,11 +45,13 @@ void GameManager::run() {
 	// Main game loop would go here
 	hideCursor();
 	screens[0].initScreenData(0);
-	screens[0].draw();
 	BombHelper::clear();
 	Player player1 = Player(Point(10, 10, 1, 0, '$'), "wdxase", screens[0]);
 	Player player2 = Player(Point(15, 5, 0, 1, '&'), "ilmjko", screens[0]);
 	Player* players[] = { &player1, &player2 };
+	bool lastTorchState = player1.hasTorch() || player2.hasTorch();
+	screens[currentScreenID].setTorchLit(lastTorchState);
+	screens[currentScreenID].draw();
 	bool p1_has_exited = false;
 	bool p2_has_exited = false;
 	Doors* p1_exit_door = nullptr;
@@ -63,6 +67,15 @@ void GameManager::run() {
 		Point pendingBomb;
 		while (BombHelper::tryPopNext(pendingBomb)) {
 			queueBombAt(pendingBomb);
+		}
+		bool torchActive = player1.hasTorch() || player2.hasTorch();
+		if (torchActive != lastTorchState) {
+			screens[currentScreenID].setTorchLit(torchActive);
+			screens[currentScreenID].draw();
+			for (auto p : players) {
+				p->draw();
+			}
+			lastTorchState = torchActive;
 		}
 		Doors* p1_door_signal = player1.getTransitionDoor();
 		Doors* p2_door_signal = player2.getTransitionDoor();
@@ -86,6 +99,7 @@ void GameManager::run() {
 
 			// בצע מעבר מסך
 			changeScreen(final_door->getDestinationScreenID(), final_door->getDestinationPosition(), player1, player2);
+			lastTorchState = player1.hasTorch() || player2.hasTorch();
 
 			// איפוס הסטטוסים לחדר החדש
 			p1_has_exited = false;
@@ -153,6 +167,8 @@ bool GameManager::processBombs(Player& p1, Player& p2) {
 	activeBombs.swap(nextBombs);
 	if (needsRedraw) {
 		screens[currentScreenID].draw();
+		p1.draw();
+		p2.draw();
 	}
 	return playerHit;
 }
