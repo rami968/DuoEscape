@@ -67,6 +67,8 @@ void screen::initScreenData(int id) {
             {1, SwitchState::ON}
         };
         doors.push_back(Doors(1, 1, Point(10, 14, 0, 0, ' '), false, false, {}, doorSwitchReq));
+        setCharAt(Point(25, 11, 0, 0, ' '), '@');
+        setCharAt(Point(55, 18, 0, 0, ' '), '@');
     }
     else if (currentScreenID == 1) {
         char Screen2[MAX_Y][MAX_X + 1] = {
@@ -100,6 +102,7 @@ void screen::initScreenData(int id) {
             strcpy_s(mapData[i], MAX_X + 1, Screen2[i]);
 		}
         registerSwitch(2, Point(30, 12, 0, 0, '/'), SwitchState::OFF);
+        setCharAt(Point(40, 15, 0, 0, ' '), '@');
     }
     else {
         char EndScreen[MAX_Y][MAX_X + 1] = {

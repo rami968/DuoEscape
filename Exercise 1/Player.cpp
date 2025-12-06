@@ -4,6 +4,7 @@
 #include <cstring>
 #include <map>
 #include "Doors.h"
+#include "BombHelper.h"
 
 Player::Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen) :
 	theScreen(&screen) {
@@ -89,7 +90,7 @@ void Player::move() {
 			theScreen->toggleSwitchAt(p);
 		}
 	}
-	else if (theScreen->isKey(p)) {
+	else if (theScreen->isKey(p) || theScreen->isBomb(p)) {
 		char elemChar = theScreen->getCharAt(p);
 		pickUpElement(elemChar, p);
 		theScreen->setCharAt(p, ' ');
@@ -133,6 +134,11 @@ void Player::resetTransitionSignal() {
 void Player::disposeElement() {
 	if (heldElement == ' ')
 		return;
+	if (heldElement == '@') {
+		BombHelper::queueBomb(p);
+		heldElement = ' ';
+		return;
+	}
 	Point elementDropPos = p;
 	elementDropPos.move();
 

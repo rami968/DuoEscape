@@ -6,6 +6,7 @@
 #include "Direction.h"
 #include "Point.h"
 #include "screen.h"
+#include "Doors.h"
 
 class Player {
 	static constexpr int NUM_KEYS = 6;
@@ -21,7 +22,6 @@ class Player {
 	std::vector<Point> collectedKeys;
 	bool hasKeyInInventory(const Point& keyPos) const;
 	bool removeKeyFromInventory(const Point& keyPos);
-	
 public:
 	Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen);
 	void disposeElement();
@@ -39,7 +39,7 @@ public:
 	void setScreen(screen* newScreen) {
 		theScreen = newScreen;
 	}
+	const Point& getPosition() const { return p; }
 	const std::vector<Point>& getCollectedKeys() const { return collectedKeys; }
-
 
 };

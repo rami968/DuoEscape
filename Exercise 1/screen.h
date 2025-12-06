@@ -47,6 +47,9 @@ public:
 	bool isKey(const Point& p) const {
 		return getCharAt(p) == 'K';
 	}
+	bool isBomb(const Point& p) const {
+		return getCharAt(p) == '@';
+	}
 	bool isRiddle(const Point& p) const {
 		return getCharAt(p) == '?';
 	}

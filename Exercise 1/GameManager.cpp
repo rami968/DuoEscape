@@ -1,11 +1,15 @@
 ﻿#include "GameManager.h"
 #include <iostream>
+#define NOMINMAX
 #include <windows.h>
 #include <conio.h>
+#include <algorithm>
+#include <cstdlib>
 #include "Player.h"
 #include "Point.h"
 #include "screen.h"
 #include "utils.h"
+#include "BombHelper.h"
 
 enum Keys { ESC = 27 };
 
@@ -25,6 +29,8 @@ void GameManager::changeScreen(int newScreenID, const Point& destinationPos, Pla
 		getCurrentScreen().draw();
 		p1.setScreen(&currentScreen);
 		p2.setScreen(&currentScreen);
+		activeBombs.clear();
+		BombHelper::clear();
 		p1.resetTransitionSignal();
 		p2.resetTransitionSignal();
 		p1.setPosition(destinationPos);
@@ -38,6 +44,7 @@ void GameManager::run() {
 	hideCursor();
 	screens[0].initScreenData(0);
 	screens[0].draw();
+	BombHelper::clear();
 	Player player1 = Player(Point(10, 10, 1, 0, '$'), "wdxase", screens[0]);
 	Player player2 = Player(Point(15, 5, 0, 1, '&'), "ilmjko", screens[0]);
 	Player* players[] = { &player1, &player2 };
@@ -48,9 +55,14 @@ void GameManager::run() {
 	for (auto p : players) {
 		p->draw();
 	}
-	while (true) {
+	bool gameOver = false;
+	while (!gameOver) {
 		for (auto p : players) {
 			p->move();
+		}
+		Point pendingBomb;
+		while (BombHelper::tryPopNext(pendingBomb)) {
+			queueBombAt(pendingBomb);
 		}
 		Doors* p1_door_signal = player1.getTransitionDoor();
 		Doors* p2_door_signal = player2.getTransitionDoor();
@@ -83,6 +95,11 @@ void GameManager::run() {
 			p1_exit_door = nullptr;
 			p2_exit_door = nullptr;
 		}
+		if (processBombs(player1, player2)) {
+			gotoxy(0, screen::MAX_Y);
+			gameOver = true;
+			continue;
+		}
 		if (_kbhit()) {
 			char key = _getch();
 			if (key == Keys::ESC) {
@@ -101,6 +118,70 @@ void GameManager::run() {
 		Sleep(50);
 	}
 	cls();
+}
+
+void GameManager::armBombAt(const Point& pos) {
+	ArmedBomb bomb{ pos.getX(), pos.getY(), BOMB_COUNTDOWN };
+	activeBombs.push_back(bomb);
+}
+
+void GameManager::queueBombAt(const Point& pos) {
+	armBombAt(pos);
+}
+
+bool GameManager::processBombs(Player& p1, Player& p2) {
+	if (activeBombs.empty()) {
+		return false;
+	}
+	bool playerHit = false;
+	bool needsRedraw = false;
+	std::vector<ArmedBomb> nextBombs;
+	nextBombs.reserve(activeBombs.size());
+	for (auto& bomb : activeBombs) {
+		ArmedBomb updated = bomb;
+		--updated.ticksRemaining;
+		if (updated.ticksRemaining <= 0) {
+			if (explodeBomb(updated, p1, p2)) {
+				playerHit = true;
+			}
+			needsRedraw = true;
+		}
+		else {
+			nextBombs.push_back(updated);
+		}
+	}
+	activeBombs.swap(nextBombs);
+	if (needsRedraw) {
+		screens[currentScreenID].draw();
+	}
+	return playerHit;
+}
+
+bool GameManager::explodeBomb(const ArmedBomb& bomb, Player& p1, Player& p2) {
+	screen& current = getCurrentScreen();
+	bool playerHit = false;
+	for (int dy = -BOMB_RADIUS; dy <= BOMB_RADIUS; ++dy) {
+		for (int dx = -BOMB_RADIUS; dx <= BOMB_RADIUS; ++dx) {
+			int chebyshev = std::max(std::abs(dx), std::abs(dy));
+			if (chebyshev > BOMB_RADIUS) {
+				continue;
+			}
+			int targetX = bomb.x + dx;
+			int targetY = bomb.y + dy;
+			if (targetX < 0 || targetX >= screen::MAX_X || targetY < 0 || targetY >= screen::MAX_Y) {
+				continue;
+			}
+			if ((p1.getPosition().getX() == targetX && p1.getPosition().getY() == targetY) ||
+				(p2.getPosition().getX() == targetX && p2.getPosition().getY() == targetY)) {
+				playerHit = true;
+			}
+			Point target(targetX, targetY, 0, 0, ' ');
+			if (current.getCharAt(target) != ' ') {
+				current.setCharAt(target, ' ');
+			}
+		}
+	}
+	return playerHit;
 }
 
 
