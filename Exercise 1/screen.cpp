@@ -89,7 +89,7 @@ void screen::initScreenData(int id) {
         doors.push_back(Doors(1, 1, Point(10, 14, 0, 0, ' '), false, false, {}, doorSwitchReq));
         setCharAt(Point(25, 11, 0, 0, ' '), '@');
         setCharAt(Point(55, 18, 0, 0, ' '), '@');
-        setCharAt(Point(60, 12, 0, 0, ' '), '!');
+        setCharAt(Point(14, 12, 0, 0, ' '), '!');
         markDarkArea(50, 8, 75, 20);
     }
     else if (currentScreenID == 1) {
