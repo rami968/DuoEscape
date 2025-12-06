@@ -33,5 +33,11 @@ public:
 	int getY() const {
 		return y;
 	}
+	char getChar() const {
+		return ch;
+	}
+	void setChar(char c) {
+		ch = c;
+	}
 };
 

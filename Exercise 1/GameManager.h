@@ -1,6 +1,7 @@
 #pragma once
 #include "screen.h"
 #include "Player.h"
+#include "Point.h"
 #include <vector>
 
 
@@ -10,11 +11,20 @@ private:
     int currentScreenID = 0;
     Player player1;
     Player player2;
+    bool p1_has_exited = false;
+    bool p2_has_exited = false;
+    Doors* p1_exit_door = nullptr;
+    Doors* p2_exit_door = nullptr;
 public:
-    GameManager(Player p_1, Player p_2);
+    GameManager();
+    void resetGameState();
     void run();
-    void changeScreen(int newScreenID, Point destinationPos, Player p1, Player p2);
-
+    void showMenuAndHandleInput();
+    void displayMenu() const;
+    void displayPauseScreen() const;
+    void changeScreen(int newScreenID, const Point& destinationPos, Player& p1, Player& p2);
+	void displayInstructions() const;
+	void handleRiddleSolving(Player* player, screen& currentScreen);
     screen& getCurrentScreen() {
         return screens[currentScreenID];
     }
