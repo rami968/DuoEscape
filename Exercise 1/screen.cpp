@@ -3,14 +3,8 @@
 #include "point.h"
 #include <algorithm>
 
-namespace {
-char switchStateToChar(SwitchState state) {
+static char switchStateToChar(SwitchState state) {
     return state == SwitchState::ON ? '\\' : '/';
-}
-
-SwitchState flippedState(SwitchState state) {
-    return state == SwitchState::ON ? SwitchState::OFF : SwitchState::ON;
-}
 }
 
 
