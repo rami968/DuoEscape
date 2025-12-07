@@ -6,10 +6,8 @@
 #include "BombHelper.h"
 
 Player::Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen) :
-	theScreen(&screen) {
-	p = point;
+	theScreen(&screen), p(point) {
 	std::memcpy(the_keys, keys, NUM_KEYS * sizeof(the_keys[0]));
-	heldElement = ' ';
 }
 
 void Player::handleKeyPressed(char key_pressed) {
@@ -41,12 +39,13 @@ void Player::move() {
 	if (awaitingScreenTransition) {
 		return;
 	}
-	// function by copylot 
+	// function by Copilot 
 	if (ticksUntilNextMove > 0) {
 		--ticksUntilNextMove;
 		return; 
 	}
 	ticksUntilNextMove = MOVE_TICK_INTERVAL;
+
 	char backgroundChar = theScreen->getCharAt(p);
 	p.draw(backgroundChar);
 	Point p_orig = p;
@@ -81,8 +80,8 @@ void Player::move() {
 		else {
 			p = p_orig;
 			}
-		}
 	}
+
 	
 	else if (theScreen->isSwitchOff(p) || theScreen->isSwitchOn(p)) {
 		bool steppedOntoSwitch = (p.getX() != p_orig.getX()) || (p.getY() != p_orig.getY());
@@ -92,6 +91,9 @@ void Player::move() {
 	}
 	else if (theScreen->isKey(p) || theScreen->isBomb(p) || theScreen->isTorch(p)) {
 		char elemChar = theScreen->getCharAt(p);
+		if (hasElement() && !(heldElement == 'K' && elemChar == 'K')) {
+			return;
+		}
 		pickUpElement(elemChar, p);
 		theScreen->setCharAt(p, ' ');
 	

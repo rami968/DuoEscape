@@ -49,7 +49,7 @@ bool Doors::canPlayerPass(const std::vector<Point>& playerKeyPos,
                 break;
             }
         }
-        
+
         if (!keyFoundInInventory) {
             return false; 
         }
@@ -72,10 +72,10 @@ void Doors::openDoor(std::vector<Point>& playerKeyPos) {
         for (size_t i = 0; i < requiredKeyCount; ++i) {
             const Point& usedKeyPos = requiredKeyPos[i];
             for (size_t j = 0; j < playerKeyPos.size(); ++j) {
-                    if (playerKeyPos[j].getX() == usedKeyPos.getX() &&
-                        playerKeyPos[j].getY() == usedKeyPos.getY()) {
-                        if (j != playerKeyPos.size() - 1) {
-                            playerKeyPos[j] = playerKeyPos.back();
+                if (playerKeyPos[j].getX() == usedKeyPos.getX() &&
+                    playerKeyPos[j].getY() == usedKeyPos.getY()) {
+                    if (j != playerKeyPos.size() - 1) {
+                        playerKeyPos[j] = playerKeyPos.back();
                     }
                     playerKeyPos.pop_back();
                     break; 

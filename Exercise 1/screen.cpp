@@ -60,15 +60,15 @@ void screen::initScreenData(int id) {
         "W                 W                                                            W", // 12
         "W                 W                                                            W", // 13
         "W                 W                                                            3", // 14
-        "WWWWWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 15
+        "WWWWWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWW          WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 15
         "W                                                                              W", // 16
         "W                                                                              W", // 17
         "W                                                                              W", // 18
         "W                                                                              W", // 19
-        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW W", // 20
+        "WWWWWWWWWWWWWWWW           WWWWWWWWWWWWWWWWWWWWWWWWWWWWW                     W W", // 20
         "W            W                             W                                   W", // 21
-        "W            W             W               W                                   W", // 22
-        "W            ?             W               1                                   W", // 23
+        "W            W             W        !      W                                   W", // 22
+        "W            ?             W                                                   W", // 23
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"  // 24
         };
         for (int i = 0; i < MAX_Y; ++i) {
