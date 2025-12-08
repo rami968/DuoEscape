@@ -42,7 +42,7 @@ public:
     void openDoor();
     bool depositKey(const Point& keyPos);
     int getDestinationScreenID() const { return destinationScreenID; }
-    const Point& getDestinationPosition() { return destinationPosition; }
+    const Point& getDestinationPosition() const { return destinationPosition; }
     char getDisplayChar() const { return (char)('0' + doorID); }
     bool getIsOneWay() const { return isOneWay; }
     size_t getRequiredKeyCount() const { return requiredKeyCount; }
