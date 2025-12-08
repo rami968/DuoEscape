@@ -67,7 +67,7 @@ void screen::initScreenData(int id) {
         "W                                                                              W", // 19
         "WWWWWWWWWWWWWWWW           WWWWWWWWWWWWWWWWWWWWWWWWWWWWW                     W W", // 20
         "W            W                             W                                   W", // 21
-        "W            W             W        !      W                                   W", // 22
+        "W            W             W        ! @    W                                   W", // 22
         "W            ?             W                                                   W", // 23
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"  // 24
         };
