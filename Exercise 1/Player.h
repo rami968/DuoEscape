@@ -11,7 +11,7 @@
 
 class Player {
 	static constexpr int NUM_KEYS = 6;
-	static constexpr int MOVE_TICK_INTERVAL = 4; // number of game loops to wait between moves
+	static constexpr int MOVE_TICK_INTERVAL = 2; // number of game loops to wait between moves
 	char the_keys[NUM_KEYS];
 	Point p;
 	Doors* currDoor = nullptr;
@@ -21,7 +21,7 @@ class Player {
 	Riddle* activeRiddle = nullptr;
 	char heldElement = ' ';
 	int ticksUntilNextMove = 0;
-	std::vector<Point> collectedKeys;
+	std::vector<Point> collectedKeys{};
 	bool hasKeyInInventory(const Point& keyPos) const;
 	bool removeKeyFromInventory(const Point& keyPos);
 public:
@@ -47,4 +47,8 @@ public:
 	void resetActiveRiddle() { activeRiddle = nullptr; }
 	const Point& getPosition() const { return p; }
 	const std::vector<Point>& getCollectedKeys() const { return collectedKeys; }
+	void consumeHeldKey();
+	void setDirection(Direction dir) {
+		p.setDirection(dir);
+	}
 };

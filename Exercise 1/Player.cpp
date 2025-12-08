@@ -30,6 +30,13 @@ void Player::handleKeyPressed(char key_pressed) {
 	}
 }
 
+void Player::consumeHeldKey() {
+	if (heldElement == 'K') {
+		removeKeyFromInventory(heldElementPos);
+		heldElement = ' ';
+	}
+}
+
 void Player::draw() {
 	if (awaitingScreenTransition) {
 		return;
@@ -59,14 +66,21 @@ void Player::move() {
 		Doors* currentDoor = theScreen->getDoorByChar(targetChar);
 		if (currentDoor != nullptr) {
 			const SwitchBoard& switchBoard = theScreen->getSwitchBoard();
-			if (!currentDoor->canPlayerPass(collectedKeys, switchBoard)) {
+			if (hasElement() && getHeldElement() == 'K' && currentDoor->getRequiredKeyCount() > 0) {
+				if (currentDoor->depositKey(heldElementPos)) {
+					consumeHeldKey();
+				}
+				p = p_orig;
+				return;
+			}
+			if (!currentDoor->canPlayerPass(switchBoard)) {
 				p = p_orig;
 			}
 			else {
-				currentDoor->openDoor(collectedKeys);
-				if (heldElement == 'K' && !hasKeyInInventory(heldElementPos)) {
-					heldElement = ' ';
-				}
+				currentDoor->openDoor();
+				//if (heldElement == 'K' && !hasKeyInInventory(heldElementPos)) {
+					//heldElement = ' ';
+				//}
 				char playerChar = p.getChar();
 				// teleport player to the door's destination but keep its glyph
 	            p = currentDoor->getDestinationPosition();
@@ -80,7 +94,6 @@ void Player::move() {
 		}
 		else {
 			p = p_orig;
-			}
 		}
 	}
 	
@@ -92,15 +105,19 @@ void Player::move() {
 	}
 	else if (theScreen->isKey(p) || theScreen->isBomb(p) || theScreen->isTorch(p)) {
 		char elemChar = theScreen->getCharAt(p);
+		if (hasElement()) {
+			p = p_orig;
+			p.draw();
+			return;
+		}
 		pickUpElement(elemChar, p);
 		theScreen->setCharAt(p, ' ');
-	
 		theScreen->draw();
 		p.draw();
 	}
 	else if (theScreen->isRiddle(p)) {
+		Riddle* currentRiddle = theScreen->getRiddleByPosition(p);
 		p = p_orig;
-		Riddle* currentRiddle = theScreen->getRiddleByPosition(Point(13, 23, 0, 0, '?'));
 		if (currentRiddle) {
 			setActiveRiddle(currentRiddle);
 		}
@@ -125,7 +142,7 @@ void Player::pickUpElement(char element, const Point& pos)
 {
 	heldElement = element;
 	heldElementPos = pos;
-	if (element == 'K') {
+	if (element == 'K' && collectedKeys.empty()) {
 		collectedKeys.push_back(pos);
 	}
 }

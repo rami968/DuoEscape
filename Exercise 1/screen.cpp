@@ -52,29 +52,29 @@ void screen::initScreenData(int id) {
         char Screen1[MAX_Y][MAX_X + 1] = {
        //01234567890123456789012345678901234567890123456789012345678901234567890123456789
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
-        "W                 W                                                            W", // 1
-        "W                 W                                                            W", // 2
-        "W                                                                              W", // 3
-        "W                 W                                                            W", // 4
-        "W                 W                                                            W", // 5
+        "W              Player1:                W                Player2:               W", // 1
+        "W Inventory:                           W Inventory:                            W", // 2
+        "W Current Room:                        W Current Room:                         W", // 3
+        "W                                      W                                       W", // 4
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 5
         "W                 W                                                            W", // 6
         "W                 W                                                            W", // 7
         "W                 W                                                            W", // 8
         "W                 W                                                            W", // 9
-        "W                 W                                                            W", // 10
-        "W                 W                                                            W", // 11
+        "W                                                                              W", // 10
+        "W                                                                              W", // 11
         "W                 W                                                            W", // 12
-        "W                 W                                                            W", // 13
+        "W                 W                                                           KW", // 13
         "W                 W                                                            3", // 14
         "WWWWWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 15
         "W                                                                              W", // 16
         "W                                                                              W", // 17
         "W                                                                              W", // 18
-        "W                                                                              W", // 19
-        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW W", // 20
+        "W                              K                                               W", // 19
+        "WWWWWWWWWWW WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW W", // 20
         "W            W                             W                                   W", // 21
         "W            W             W               W                                   W", // 22
-        "W            ?             W               1                                   W", // 23
+        "W            ?             W                                                   W", // 23
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"  // 24
         };
         for (int i = 0; i < MAX_Y; ++i) {
@@ -89,31 +89,32 @@ void screen::initScreenData(int id) {
             {1, SwitchState::ON}
         };
         const size_t doorSwitchReqCount = sizeof(doorSwitchReq) / sizeof(doorSwitchReq[0]);
-        doors.emplace_back(1, 1, Point(10, 14, 0, 0, ' '), false, false,
-            nullptr, 0,
+		std::vector<Point> keyPositions = { Point(31, 19, 0, 0, 'K'), Point(79, 13, 0, 0, 'K') };
+        doors.emplace_back(3, 1, Point(10, 14, 0, 0, ' '), false, false,
+            keyPositions , 2,
             doorSwitchReq, doorSwitchReqCount);
         setCharAt(Point(25, 11, 0, 0, ' '), '@');
         setCharAt(Point(55, 18, 0, 0, ' '), '@');
         setCharAt(Point(14, 12, 0, 0, ' '), '!');
-        for (int x = 18; x <= 26; ++x) {
-            setCharAt(Point(x, 10, 0, 0, '#'), '#');
-        }
+        //for (int x = 18; x <= 26; ++x) {
+            //setCharAt(Point(x, 10, 0, 0, '#'), '#');
+        //}
         for (int x = 32; x <= 40; ++x) {
             setCharAt(Point(x, 19, 0, 0, '#'), '#');
         }
-        for (int y = 6; y <= 16; ++y) {
-            setCharAt(Point(45, y, 0, 0, 'W'), 'W');
-        }
+        //for (int y = 6; y <= 16; ++y) {
+          //  setCharAt(Point(45, y, 0, 0, 'W'), 'W');
+        //}
         markDarkArea(50, 8, 75, 20);
     }
     else if (currentScreenID == 1) {
         char Screen2[MAX_Y][MAX_X + 1] = {
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
-        "W                                                                              W", // 1
-        "W                                                                              6", // 2
-        "W                                                                              W", // 3
-        "W                                                                              W", // 4
-        "W                                                                              W", // 5
+        "W              Player1:                W                Player2:               W", // 1
+        "W Inventory:                           W Inventory:                            W", // 2
+        "W Current Room:                        W Current Room:                         W", // 3
+        "W                                      W                                       W", // 4
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 5
         "W                                                                              W", // 6
         "W                                                                              W", // 7
         "W                                                                              W", // 8

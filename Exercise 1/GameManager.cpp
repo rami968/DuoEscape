@@ -136,14 +136,46 @@ void GameManager::handleRiddleSolving(Player* player, screen& currentScreen) {
 			std::cout << "Correct! You have solved the riddle." << std::endl;
 			currentScreen.setCharAt(riddle->getPosition(), ' '); // Remove riddle from screen
 			player->resetActiveRiddle();
+			player->setPosition(riddle->getPosition()); // Move player to riddle position
+			player->setDirection(Direction::STAY);
+			std::cout << "Press any key to continue...";
+			_getch();
+			currentScreen.draw();
+			player->draw();
 		}
 		else {
 			std::cout << "Incorrect answer. Try again later." << std::endl;
+			std::cout << "Press any key to continue...";
+			_getch();
+			currentScreen.draw();
+			player->setDirection(Direction::STAY);
+			player->draw();
+			player->resetActiveRiddle();
 		}
-		std::cout << "Press any key to continue...";
-		_getch();
-		currentScreen.draw();
-		player->draw();
+	}
+}
+
+void GameManager::displayingPlayerStatus(Player& p1, Player& p2, screen& currentScreen) {
+	int screenIdToDisplay = currentScreenID; 
+	if (p1.isAwaitingTransition() || p2.isAwaitingTransition()) {
+		screenIdToDisplay = currentScreenID + 1;
+	}
+	currentScreen.setCharAt(Point(17, 3, 0, 0, ' '), '0' + screenIdToDisplay);
+	currentScreen.setCharAt(Point(55, 3, 0, 0, ' '), '0' + screenIdToDisplay);
+
+	if (p1.hasElement()) {
+		char heldElement = p1.getHeldElement();
+		currentScreen.setCharAt(Point(14, 2, 0, 0, ' '), heldElement);
+	}
+	else {
+		currentScreen.setCharAt(Point(14, 2, 0, 0, ' '), ' ');
+	}
+	if (p2.hasElement()) {
+		char heldElement = p2.getHeldElement();
+		currentScreen.setCharAt(Point(53, 2, 0, 0, ' '), heldElement);
+	}
+	else {
+		currentScreen.setCharAt(Point(53, 2, 0, 0, ' '), ' ');
 	}
 }
 
@@ -159,6 +191,7 @@ void GameManager::run() {
 	bool lastTorchState = player1.hasTorch() || player2.hasTorch();
 	screens[currentScreenID].setTorchLit(lastTorchState);
 	screens[currentScreenID].draw();
+	displayingPlayerStatus(p1, p2, getCurrentScreen());
 	for (auto p : players) {
 		p->draw();
 	}
@@ -167,6 +200,7 @@ void GameManager::run() {
 		for (auto p : players) {
 			p->move();
 		}
+		displayingPlayerStatus(p1, p2, getCurrentScreen());
 		for (auto p : players) {
 			if (p->getActiveRiddle() != nullptr) {
 				handleRiddleSolving(p, getCurrentScreen());
