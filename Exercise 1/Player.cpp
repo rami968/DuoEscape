@@ -17,10 +17,12 @@ void Player::handleKeyPressed(char key_pressed) {
 		return;
 	}
 	char lk = std::tolower(key_pressed);
-	if (lk == 'e' || lk == 'o') {
-		disposeElement();
-		return;
+    char disposeKey = the_keys[NUM_KEYS - 1];
+    if (lk == disposeKey) {
+        disposeElement();
+        return;
 	}
+	
 	for (size_t index = 0; index < NUM_KEYS; ++index) {
 		char k = the_keys[index];
 		if (k == lk) {
@@ -83,9 +85,7 @@ void Player::move() {
 			}
 			else {
 				currentDoor->openDoor();
-				//if (heldElement == 'K' && !hasKeyInInventory(heldElementPos)) {
-					//heldElement = ' ';
-				//}
+			
 				char playerChar = p.getChar();
 				// teleport player to the door's destination but keep its glyph
 	            p = currentDoor->getDestinationPosition();
@@ -197,7 +197,7 @@ void Player::disposeElement() {
 
 	theScreen->setCharAt(elementDropPos, heldElement);
 	heldElement = ' ';
-	 p.setDirection(Direction::STAY);
+	p.setDirection(Direction::STAY);
     lastMoveDir = Direction::STAY;
 	theScreen->draw();
 	p.draw();

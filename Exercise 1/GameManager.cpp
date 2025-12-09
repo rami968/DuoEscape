@@ -93,68 +93,6 @@ void GameManager::displayPauseScreen() const {
 	std::cout << "Game paused, press ESC again to continue or H to go back to the main menu." << std::endl;
 }
 
-void GameManager::showMenuAndHandleInput() {
-	char choice;
-	bool running = true;
-
-	while (running) {
-		displayMenu();
-		if (_kbhit()) {
-			choice = static_cast<char>(_getch());
-		}
-		else {
-			std::cin >> choice;
-		}
-		switch (choice) {
-		case '1':
-			resetGameState();
-			run();
-			break;
-		case '8':
-			displayInstructions(); 
-			break;
-		case '9':
-			running = false;
-			break;
-		default:
-			std::cout << "\n Invalid choice. Please try again (press any key to continue)...";
-			_getch(); 
-			break;
-		}
-	}
-}
-
-void GameManager::handleRiddleSolving(Player* player, screen& currentScreen) {
-	Riddle* riddle = player->getActiveRiddle();
-	if (riddle != nullptr) {
-		cls();
-		std::cout << "Riddle: " << riddle->getQuestion() << std::endl;
-		std::cout << "Your answer: ";
-		std::string answer;
-		std::cin >> answer;
-		if (riddle->checkAnswer(answer)) {
-			std::cout << "Correct! You have solved the riddle." << std::endl;
-			currentScreen.setCharAt(riddle->getPosition(), ' '); // Remove riddle from screen
-			player->resetActiveRiddle();
-			player->setPosition(riddle->getPosition()); // Move player to riddle position
-			player->setDirection(Direction::STAY);
-			std::cout << "Press any key to continue...";
-			_getch();
-			currentScreen.draw();
-			player->draw();
-		}
-		else {
-			std::cout << "Incorrect answer. Try again later." << std::endl;
-			std::cout << "Press any key to continue...";
-			_getch();
-			currentScreen.draw();
-			player->setDirection(Direction::STAY);
-			player->draw();
-			player->resetActiveRiddle();
-		}
-	}
-}
-
 void GameManager::displayingPlayerStatus(Player& p1, Player& p2, screen& currentScreen) {
 	int screenIdToDisplay = currentScreenID; 
 	if (p1.isAwaitingTransition() || p2.isAwaitingTransition()) {
@@ -227,6 +165,7 @@ void GameManager::prepareRun(Player* players[], size_t playerCount, bool& torchS
 	}
 
 	current.setTorchLit(torchState);
+	displayingPlayerStatus(*players[0], *players[1], current);
 	current.draw();
 	drawPlayers(players, playerCount);
 }
@@ -276,64 +215,51 @@ void GameManager::updateTorchLighting(bool& torchState, Player* players[], size_
 	drawPlayers(players, playerCount);
 }
 
-		// 4. בדיקת מעבר מסך (כלל השחקן השני)
-		if (p1_has_exited && p2_has_exited) {
+bool GameManager::handleUserInput(Player* players[], size_t playerCount) {
+	if (!_kbhit()) {
+		return true;
+	}
 
-			// המשיכו לפי הדרישה: המשחק ממשיך עם השחקן השני שעזב.
-			// אם שניהם עזבו, נלך לפי הסיגנל האחרון שהגיע (p2_exit_door).
-			Doors* final_door = p2_exit_door;
-
-			// בצע מעבר מסך
-			changeScreen(final_door->getDestinationScreenID(), final_door->getDestinationPosition(), p1, p2);
-			lastTorchState = player1.hasTorch() || player2.hasTorch();
-			// איפוס הסטטוסים לחדר החדש
-			p1_has_exited = false;
-			p2_has_exited = false;
-			p1.resetTransitionSignal();
-			p2.resetTransitionSignal();
-			p1_exit_door = nullptr;
-			p2_exit_door = nullptr;
-		}
-		if (processBombs(player1, player2)) {
-			gotoxy(0, screen::MAX_Y);
-			gameOver = true;
-			continue;
-		}
-		if (_kbhit()) {
-			char key = _getch();
+	char key = _getch();
+	if (key == Keys::ESC) {
+		displayPauseScreen();
+		while (true) {
+			key = _getch();
 			if (key == Keys::ESC) {
-				displayPauseScreen();
-				key = _getch();
-				if (key == 'H' || key == 'h') {
-					break;
-				}
-				else if (key == Keys::ESC) {
-					getCurrentScreen().draw();
-					for (auto p : players) {
-						p->draw();
-					}
-				}
-				else {
-					while (1) {
-						key = _getch();
-						if (key == Keys::ESC) {
-							getCurrentScreen().draw();
-							for (auto p : players) {
-								p->draw();
-							}
-							break;
-						}
-						else if (key == 'H' || key == 'h') {
-							return;
-						}
-					}
-				}
+				getCurrentScreen().draw();
+				drawPlayers(players, playerCount);
+				return true;
 			}
-			else {
-				for (auto p : players) {
-					p->handleKeyPressed(key);
-				}
+			if (key == 'H' || key == 'h') {
+				return false;
 			}
+		}
+	}
+
+	for (size_t i = 0; i < playerCount; ++i) {
+		players[i]->handleKeyPressed(key);
+	}
+	return true;
+}
+
+void GameManager::handleDoorTransitions(Player& p1, Player& p2, bool& torchState) {
+	Doors* p1Door = p1.getTransitionDoor();
+	Doors* p2Door = p2.getTransitionDoor();
+
+	if (p1Door && !p1_has_exited) {
+		p1_has_exited = true;
+		p1_exit_door = p1Door;
+	}
+	if (p2Door && !p2_has_exited) {
+		p2_has_exited = true;
+		p2_exit_door = p2Door;
+	}
+
+	if (p1_has_exited && p2_has_exited) {
+		Doors* finalDoor = p2_exit_door ? p2_exit_door : p1_exit_door;
+		if (finalDoor) {
+			changeScreen(finalDoor->getDestinationScreenID(), finalDoor->getDestinationPosition(), p1, p2);
+			torchState = p1.hasTorch() || p2.hasTorch();
 		}
 		p1_has_exited = false;
 		p2_has_exited = false;
@@ -400,18 +326,15 @@ bool GameManager::explodeBomb(const ArmedBomb& bomb, Player& p1, Player& p2) {
 				playerHit = true;
 			}
 			Point target(targetX, targetY, 0, 0, ' ');
-
 			char ch = current.getCharAt(target);
-
             if (ch == 'W') {
                continue;
             }
             if (ch != ' ')
             current.setCharAt(target, ' '); 
 		    }
-	}
 	return playerHit;
+	}
+	
 }
-
-
-
+	
