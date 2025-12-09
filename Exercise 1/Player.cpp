@@ -15,19 +15,21 @@ void Player::handleKeyPressed(char key_pressed) {
 		return;
 	}
 	char lk = std::tolower(key_pressed);
-	if (lk == 'e' || lk == 'o') {
+	char disposeKey = the_keys[NUM_KEYS - 1];
+	if (lk == disposeKey) {
 		disposeElement();
 		return;
 	}
+
 	for (size_t index = 0; index < NUM_KEYS; ++index) {
 		char k = the_keys[index];
 		if (k == lk) {
 			Direction dir = static_cast<Direction>(index);
-            p.setDirection(dir);
-            if (dir != Direction::STAY) {
-              lastMoveDir = dir;
+			p.setDirection(dir);
+			if (dir != Direction::STAY) {
+				lastMoveDir = dir;
 			}
-		return;
+			return;
 
 		}
 	}
@@ -106,7 +108,7 @@ void Player::move() {
 			theScreen->toggleSwitchAt(p);
 		}
 	}
-	else if (theScreen->isKey(p) || theScreen->isBomb(p) || theScreen->isTorch(p)) {
+	else if (theScreen->isKey(p) || theScreen->isTorch(p)) {
 		char elemChar = theScreen->getCharAt(p);
 		if (hasElement()) {
 			p = p_orig;
@@ -190,9 +192,6 @@ void Player::disposeElement() {
     elementDropPos.setDirection(dir); 
     elementDropPos.move();          
 
-	if (heldElement == '@') {
-		BombHelper::queueBomb(elementDropPos);
-	}
 
 	if (theScreen->isWall(elementDropPos) ||
 		theScreen->isDoor(elementDropPos) ||

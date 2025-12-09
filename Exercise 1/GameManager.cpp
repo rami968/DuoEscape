@@ -9,14 +9,13 @@
 #include "Point.h"
 #include "screen.h"
 #include "utils.h"
-#include "BombHelper.h"
 
 enum Keys { ESC = 27 };
 
 GameManager::GameManager() :
 	screens{ screen(0), screen(1), screen(2) },
-	player1(Point(1, 22, 0, 0, '$'), "wdxase", screens[0]),
-	player2(Point(1, 23, 0, 0, '&'), "ilmjko", screens[0])
+	player1(Point(1, 6, 0, 0, '$'), "wdxase", screens[0]),
+	player2(Point(1, 19, 0, 0, '&'), "ilmjko", screens[0])
 {
 	currentScreenID = 0;
 }
@@ -29,8 +28,6 @@ void GameManager::changeScreen(int newScreenID, const Point& destinationPos, Pla
 		currentScreen.initScreenData(currentScreenID);
 		p1.setScreen(&currentScreen);
 		p2.setScreen(&currentScreen);
-		activeBombs.clear();
-		BombHelper::clear();
 		p1.resetTransitionSignal();
 		p2.resetTransitionSignal();
 		p1.setPosition(destinationPos);
@@ -219,10 +216,6 @@ void GameManager::run() {
 				handleRiddleSolving(p, getCurrentScreen());
 			}
 		}
-		Point pendingBomb;
-		while (BombHelper::tryPopNext(pendingBomb)) {
-			queueBombAt(pendingBomb);
-		}
 		bool torchActive = player1.hasTorch() || player2.hasTorch();
 		if (torchActive != lastTorchState) {
 			screens[currentScreenID].setTorchLit(torchActive);
@@ -252,11 +245,6 @@ void GameManager::run() {
 			p2.resetTransitionSignal();
 			p1_exit_door = nullptr;
 			p2_exit_door = nullptr;
-		}
-		if (processBombs(player1, player2)) {
-			gotoxy(0, screen::MAX_Y);
-			gameOver = true;
-			continue;
 		}
 		if (_kbhit()) {
 			char key = _getch();
@@ -297,72 +285,6 @@ void GameManager::run() {
 		Sleep(50);
 	}
 	cls();
-}
-
-void GameManager::armBombAt(const Point& pos) {
-	ArmedBomb bomb{ pos.getX(), pos.getY(), BOMB_COUNTDOWN };
-	activeBombs.push_back(bomb);
-}
-
-void GameManager::queueBombAt(const Point& pos) {
-	armBombAt(pos);
-}
-
-bool GameManager::processBombs(Player& p1, Player& p2) {
-	if (activeBombs.empty()) {
-		return false;
-	}
-	bool playerHit = false;
-	bool needsRedraw = false;
-	std::vector<ArmedBomb> nextBombs;
-	nextBombs.reserve(activeBombs.size());
-	for (auto& bomb : activeBombs) {
-		ArmedBomb updated = bomb;
-		--updated.ticksRemaining;
-		if (updated.ticksRemaining <= 0) {
-			if (explodeBomb(updated, p1, p2)) {
-				playerHit = true;
-			}
-			needsRedraw = true;
-		}
-		else {
-			nextBombs.push_back(updated);
-		}
-	}
-	activeBombs.swap(nextBombs);
-	if (needsRedraw) {
-		screens[currentScreenID].draw();
-		p1.draw();
-		p2.draw();
-	}
-	return playerHit;
-}
-
-bool GameManager::explodeBomb(const ArmedBomb& bomb, Player& p1, Player& p2) {
-	screen& current = getCurrentScreen();
-	bool playerHit = false;
-	for (int dy = -BOMB_RADIUS; dy <= BOMB_RADIUS; ++dy) {
-		for (int dx = -BOMB_RADIUS; dx <= BOMB_RADIUS; ++dx) {
-			int chebyshev = std::max(std::abs(dx), std::abs(dy));
-			if (chebyshev > BOMB_RADIUS) {
-				continue;
-			}
-			int targetX = bomb.x + dx;
-			int targetY = bomb.y + dy;
-			if (targetX < 0 || targetX >= screen::MAX_X || targetY < 0 || targetY >= screen::MAX_Y) {
-				continue;
-			}
-			if ((p1.getPosition().getX() == targetX && p1.getPosition().getY() == targetY) ||
-				(p2.getPosition().getX() == targetX && p2.getPosition().getY() == targetY)) {
-				playerHit = true;
-			}
-			Point target(targetX, targetY, 0, 0, ' ');
-			if (current.getCharAt(target) != ' ') {
-				current.setCharAt(target, ' ');
-			}
-		}
-	}
-	return playerHit;
 }
 
 

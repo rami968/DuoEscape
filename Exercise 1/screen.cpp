@@ -66,24 +66,24 @@ void screen::initScreenData(int id) {
         "W Current Room:                        W Current Room:                         W", // 3
         "W                                      W                                       W", // 4
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 5
-        "W                 W                                                            W", // 6
-        "W                 W                                                            W", // 7
-        "W                 W                                                            W", // 8
-        "W                 W                                                            W", // 9
-        "W                                                                              W", // 10
-        "W                                                                              W", // 11
-        "W                 W                                                            W", // 12
-        "W                 W                                                           KW", // 13
-        "W                 W                                                            3", // 14
+        "W                 W                W                W          W               W", // 6
+        "W  WWWWWWWWWWWWW  W                W                W   W      WWWWWWWWWWWW    W", // 7
+        "WK             W  W                W                WWWWW      WW         W    W", // 8
+        "WWWWWWWWWWWWWWWW  W                W                           WW   WWWW  W    W", // 9
+        "W                                  W                           WW   W  W  W    W", // 10
+        "W                                  2                                W  W  W    W", // 11
+        "W                 W                W         WWWWW             WWWWWW  W  W    W", // 12
+        "W                 W                W         W   W             W       W  W    W", // 13
+        "W                 W                W         W                 W       W       3", // 14
         "WWWWWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 15
-        "W                                                                              W", // 16
-        "W                                                                              W", // 17
-        "W                                                                              W", // 18
-        "W                              K                                               W", // 19
-        "WWWWWWWWWWW WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW W", // 20
+        "W  K     W                                                                     W", // 16
+        "W        W                   WWW?WWW                                           W", // 17
+        "W        W                   W     W                                           W", // 18
+        "W        1                   W  K  W                                           W", // 19
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW  W", // 20
         "W            W                             W                                   W", // 21
         "W            W             W               W                                   W", // 22
-        "W K          ?             W                                                   W", // 23
+        "W            ?             W                              !                    W", // 23
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"  // 24
         };
         initialKeyPositions.clear();
@@ -101,6 +101,7 @@ void screen::initScreenData(int id) {
         registerSwitch(1, Point(20, 10, 0, 0, '/'), SwitchState::OFF);
         riddles.clear();
 		riddles.push_back(Riddle(0, Point(13, 23, 0, 0, '?'), "What has keys but can't open locks?", "Keyboard"));
+		riddles.push_back(Riddle(1, Point(32, 17, 0, 0, '?'), "What has keys but can't open locks?", "Keyboard"));
         const Doors::SwitchRequirement doorSwitchReq[] = {
             {0, SwitchState::ON},
             {1, SwitchState::ON}
@@ -109,6 +110,9 @@ void screen::initScreenData(int id) {
 		std::vector<Point> keyPositions = { Point(31, 19, 0, 0, 'K'), Point(78, 13, 0, 0, 'K'), Point(2, 23, 0, 0, 'K')};
         doors.emplace_back(3, 1, Point(10, 14, 0, 0, ' '), false, false,
             keyPositions , 3,
+            doorSwitchReq, doorSwitchReqCount);
+        doors.emplace_back(1, 0, Point(9, 19, 0, 0, ' '), false, false,
+            keyPositions, 3,
             doorSwitchReq, doorSwitchReqCount);
         markDarkArea(50, 8, 75, 20);
     }

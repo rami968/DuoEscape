@@ -39,7 +39,7 @@ public:
 	void draw() const;
 	bool isWall(const Point& p) const {
 		 char ch = getCharAt(p);
-		 return (ch == 'W' || ch == 'w');
+		 return (ch == 'W');
 	}
 	bool isDoor(const Point& p) const {
 		return isdigit(getCharAt(p));
@@ -55,9 +55,6 @@ public:
 	}
 	bool isTorch(const Point& p) const {
 		return getCharAt(p) == '!';
-	}
-	bool isBomb(const Point& p) const {
-		return getCharAt(p) == '@';
 	}
 	bool isRiddle(const Point& p) const {
 		return getCharAt(p) == '?';
