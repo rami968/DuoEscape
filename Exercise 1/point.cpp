@@ -30,3 +30,16 @@ void Point::setDirection(Direction dir) {
 		break;
 	}
 }
+
+Direction Point::getDirection() const {
+    if (diff_x == 1 && diff_y == 0)
+        return Direction::RIGHT;
+    if (diff_x == -1 && diff_y == 0)
+        return Direction::LEFT;
+    if (diff_x == 0 && diff_y == -1)
+        return Direction::UP;
+    if (diff_x == 0 && diff_y == 1)
+        return Direction::DOWN;
+    return Direction::STAY;
+}
+

@@ -22,8 +22,13 @@ void Player::handleKeyPressed(char key_pressed) {
 	for (size_t index = 0; index < NUM_KEYS; ++index) {
 		char k = the_keys[index];
 		if (k == lk) {
-			p.setDirection((Direction)index);
-			return;
+			Direction dir = static_cast<Direction>(index);
+            p.setDirection(dir);
+            if (dir != Direction::STAY) {
+              lastMoveDir = dir;
+			}
+		return;
+
 		}
 	}
 }
@@ -142,27 +147,46 @@ void Player::resetTransitionSignal() {
 void Player::disposeElement() {
 	if (heldElement == ' ')
 		return;
+	 Direction dir = p.getDirection();
+
+    if (dir == Direction::STAY) {
+        if (lastMoveDir != Direction::STAY) {
+            dir = lastMoveDir;
+        }
+        else {
+            dir = Direction::RIGHT;
+        }
+    }
+
+    Point elementDropPos = p;
+    elementDropPos.setDirection(dir); 
+    elementDropPos.move();          
+
 	if (heldElement == '@') {
-		BombHelper::queueBomb(p);
-		heldElement = ' ';
-		return;
+		BombHelper::queueBomb(elementDropPos);
 	}
-	Point elementDropPos = p;
-	elementDropPos.move();
 
 	if (theScreen->isWall(elementDropPos) ||
 		theScreen->isDoor(elementDropPos) ||
 		theScreen->isSwitchOff(elementDropPos) ||
 		theScreen->isSwitchOn(elementDropPos) ||
-		theScreen->isRiddle(elementDropPos)) {
+		theScreen->isRiddle(elementDropPos) ||
+	    theScreen->isTorch(elementDropPos)     ||
+        theScreen->getCharAt(elementDropPos) != ' ') {
 		return;
 	}
-	theScreen->setCharAt(elementDropPos, heldElement);
+	
 	if (heldElement == 'K') {
 		removeKeyFromInventory(heldElementPos);
 	}
+
+	theScreen->setCharAt(elementDropPos, heldElement);
 	heldElement = ' ';
-};
+	 p.setDirection(Direction::STAY);
+    lastMoveDir = Direction::STAY;
+	theScreen->draw();
+	p.draw();
+}
 
 bool Player::hasKeyInInventory(const Point& keyPos) const {
 	for (const auto& storedKey : collectedKeys) {

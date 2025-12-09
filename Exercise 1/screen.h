@@ -37,7 +37,8 @@ public:
 	void initScreenData(int ScreenID);
 	void draw() const;
 	bool isWall(const Point& p) const {
-		return getCharAt(p) == 'W';
+		 char ch = getCharAt(p);
+		 return (ch == 'W' || ch == 'w');
 	}
 	bool isDoor(const Point& p) const {
 		return isdigit(getCharAt(p));

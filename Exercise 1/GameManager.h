@@ -3,6 +3,7 @@
 #include "Point.h"
 #include "Player.h"
 #include <vector>
+#include <cstddef>
 
 
 
@@ -27,6 +28,14 @@ private:
     void armBombAt(const Point& pos);
     bool processBombs(Player& p1, Player& p2);
     bool explodeBomb(const ArmedBomb& bomb, Player& p1, Player& p2);
+    void prepareRun(Player* players[], size_t playerCount, bool& torchState);
+    void movePlayers(Player* players[], size_t playerCount);
+    void drawPlayers(Player* players[], size_t playerCount) const;
+    void resolveActiveRiddles(Player* players[], size_t playerCount);
+    void flushQueuedBombs();
+    void updateTorchLighting(bool& torchState, Player* players[], size_t playerCount);
+    bool handleUserInput(Player* players[], size_t playerCount);
+    void handleDoorTransitions(Player& p1, Player& p2, bool& torchState);
 public:
     GameManager();
     void resetGameState();
