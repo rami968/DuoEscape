@@ -30,6 +30,9 @@ public:
 	int getX() const {
 		return x;
 	}
+
+	Direction getDirection() const;
+	
 	int getY() const {
 		return y;
 	}
