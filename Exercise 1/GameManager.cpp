@@ -180,57 +180,101 @@ void GameManager::displayingPlayerStatus(Player& p1, Player& p2, screen& current
 }
 
 void GameManager::run() {
-	// Main game loop would go here
-	hideCursor();
-	screens[0].initScreenData(0);
-	screens[0].draw();
-	Player& p1 = player1;
-	Player& p2 = player2;
-	Player* players[] = {&p1, &p2};
-	BombHelper::clear();
-	bool lastTorchState = player1.hasTorch() || player2.hasTorch();
-	screens[currentScreenID].setTorchLit(lastTorchState);
-	screens[currentScreenID].draw();
-	displayingPlayerStatus(p1, p2, getCurrentScreen());
-	for (auto p : players) {
-		p->draw();
+	Player* players[] = { &player1, &player2 };
+	const size_t playerCount = sizeof(players) / sizeof(players[0]);
+	bool torchState = false;
+
+	prepareRun(players, playerCount, torchState);
+
+	bool running = true;
+	while (running) {
+		movePlayers(players, playerCount);
+		resolveActiveRiddles(players, playerCount);
+		flushQueuedBombs();
+		updateTorchLighting(torchState, players, playerCount);
+		handleDoorTransitions(*players[0], *players[1], torchState);
+
+		if (processBombs(*players[0], *players[1])) {
+			gotoxy(0, screen::MAX_Y);
+			break;
+		}
+
+		running = handleUserInput(players, playerCount);
+		Sleep(50);
 	}
-	bool gameOver = false;
-	while (!gameOver) {
-		for (auto p : players) {
-			p->move();
+
+	cls();
+}
+
+void GameManager::prepareRun(Player* players[], size_t playerCount, bool& torchState) {
+	hideCursor();
+	screen& current = getCurrentScreen();
+	current.initScreenData(currentScreenID);
+	BombHelper::clear();
+	activeBombs.clear();
+	p1_has_exited = false;
+	p2_has_exited = false;
+	p1_exit_door = nullptr;
+	p2_exit_door = nullptr;
+	torchState = false;
+
+	for (size_t i = 0; i < playerCount; ++i) {
+		players[i]->setScreen(&current);
+		players[i]->resetTransitionSignal();
+		if (players[i]->hasTorch()) {
+			torchState = true;
 		}
-		displayingPlayerStatus(p1, p2, getCurrentScreen());
-		for (auto p : players) {
-			if (p->getActiveRiddle() != nullptr) {
-				handleRiddleSolving(p, getCurrentScreen());
-			}
+	}
+
+	current.setTorchLit(torchState);
+	current.draw();
+	drawPlayers(players, playerCount);
+}
+
+void GameManager::movePlayers(Player* players[], size_t playerCount) {
+	for (size_t i = 0; i < playerCount; ++i) {
+		players[i]->move();
+	}
+}
+
+void GameManager::drawPlayers(Player* players[], size_t playerCount) const {
+	for (size_t i = 0; i < playerCount; ++i) {
+		players[i]->draw();
+	}
+}
+
+void GameManager::resolveActiveRiddles(Player* players[], size_t playerCount) {
+	for (size_t i = 0; i < playerCount; ++i) {
+		if (players[i]->getActiveRiddle() != nullptr) {
+			handleRiddleSolving(players[i], getCurrentScreen());
 		}
-		Point pendingBomb;
-		while (BombHelper::tryPopNext(pendingBomb)) {
-			queueBombAt(pendingBomb);
+	}
+}
+
+void GameManager::flushQueuedBombs() {
+	Point pendingBomb;
+	while (BombHelper::tryPopNext(pendingBomb)) {
+		queueBombAt(pendingBomb);
+	}
+}
+
+void GameManager::updateTorchLighting(bool& torchState, Player* players[], size_t playerCount) {
+	bool torchActive = false;
+	for (size_t i = 0; i < playerCount; ++i) {
+		if (players[i]->hasTorch()) {
+			torchActive = true;
+			break;
 		}
-		bool torchActive = player1.hasTorch() || player2.hasTorch();
-		if (torchActive != lastTorchState) {
-			screens[currentScreenID].setTorchLit(torchActive);
-			screens[currentScreenID].draw();
-			for (auto p : players) {
-				p->draw();
-			}
-			lastTorchState = torchActive;
-		}
-		Doors* p1_door_signal = player1.getTransitionDoor();
-		Doors* p2_door_signal = player2.getTransitionDoor();
-		//if (p1_door_signal != nullptr && p2_door_signal != nullptr) {
-			//changeScreen(p2_door_signal->getDestinationScreenID(), p2_door_signal->getDestinationPosition(), player1, player2);
-			//player1.resetTransitionSignal();
-			//player2.resetTransitionSignal();
-		if (p1_door_signal && !p1_has_exited) {
-			p1_has_exited = true; p1_exit_door = p1_door_signal;
-		}
-		if (p2_door_signal && !p2_has_exited) {
-			p2_has_exited = true; p2_exit_door = p2_door_signal;
-		}
+	}
+	if (torchActive == torchState) {
+		return;
+	}
+	torchState = torchActive;
+	screen& current = getCurrentScreen();
+	current.setTorchLit(torchState);
+	current.draw();
+	drawPlayers(players, playerCount);
+}
 
 		// 4. בדיקת מעבר מסך (כלל השחקן השני)
 		if (p1_has_exited && p2_has_exited) {
@@ -291,9 +335,11 @@ void GameManager::run() {
 				}
 			}
 		}
-		Sleep(50);
+		p1_has_exited = false;
+		p2_has_exited = false;
+		p1_exit_door = nullptr;
+		p2_exit_door = nullptr;
 	}
-	cls();
 }
 
 void GameManager::armBombAt(const Point& pos) {
@@ -354,10 +400,15 @@ bool GameManager::explodeBomb(const ArmedBomb& bomb, Player& p1, Player& p2) {
 				playerHit = true;
 			}
 			Point target(targetX, targetY, 0, 0, ' ');
-			if (current.getCharAt(target) != ' ') {
-				current.setCharAt(target, ' ');
-			}
-		}
+
+			char ch = current.getCharAt(target);
+
+            if (ch == 'W') {
+               continue;
+            }
+            if (ch != ' ')
+            current.setCharAt(target, ' '); 
+		    }
 	}
 	return playerHit;
 }
