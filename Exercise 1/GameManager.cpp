@@ -14,8 +14,8 @@ enum Keys { ESC = 27 };
 
 GameManager::GameManager() :
 	screens{ screen(0), screen(1), screen(2) },
-	player1(Point(1, 6, 0, 0, '$'), "wdxase", screens[0]),
-	player2(Point(1, 19, 0, 0, '&'), "ilmjko", screens[0])
+	player1(Point(1, 19, 0, 0, '$'), "wdxase", screens[0]),
+	player2(Point(1, 23, 0, 0, '&'), "ilmjko", screens[0])
 {
 	currentScreenID = 0;
 }
@@ -45,7 +45,7 @@ void GameManager::resetGameState() {
 	p2_has_exited = false;
 	p1_exit_door = nullptr;
 	p2_exit_door = nullptr;
-	player1.setPosition(Point(1, 22, 0, 0, '$'));
+	player1.setPosition(Point(1, 19, 0, 0, '$'));
 	player2.setPosition(Point(1, 23, 0, 0, '&'));
 }
 
@@ -193,7 +193,6 @@ void GameManager::run() {
 	Player& p1 = player1;
 	Player& p2 = player2;
 	Player* players[] = {&p1, &p2};
-	BombHelper::clear();
 	bool lastTorchState = player1.hasTorch() || player2.hasTorch();
 	displayingPlayerStatus(p1, p2, getCurrentScreen());
 	screens[currentScreenID].setTorchLit(lastTorchState);

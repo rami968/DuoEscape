@@ -67,13 +67,13 @@ void screen::initScreenData(int id) {
         "W                                      W                                       W", // 4
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 5
         "W                 W                W                W          W               W", // 6
-        "W  WWWWWWWWWWWWW  W                W                W   W      WWWWWWWWWWWW    W", // 7
+        "W  WWWWWWWWWWWWW  W                W                W K W      WWWWWWWWWWWW    W", // 7
         "WK             W  W                W                WWWWW      WW         W    W", // 8
         "WWWWWWWWWWWWWWWW  W                W                           WW   WWWW  W    W", // 9
         "W                                  W                           WW   W  W  W    W", // 10
         "W                                  2                                W  W  W    W", // 11
         "W                 W                W         WWWWW             WWWWWW  W  W    W", // 12
-        "W                 W                W         W   W             W       W  W    W", // 13
+        "W                 W                W         W K W             W       W  W    W", // 13
         "W                 W                W         W                 W       W       3", // 14
         "WWWWWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 15
         "W  K     W                                                                     W", // 16
@@ -107,12 +107,15 @@ void screen::initScreenData(int id) {
             {1, SwitchState::ON}
         };
         const size_t doorSwitchReqCount = sizeof(doorSwitchReq) / sizeof(doorSwitchReq[0]);
-		std::vector<Point> keyPositions = { Point(31, 19, 0, 0, 'K'), Point(78, 13, 0, 0, 'K'), Point(2, 23, 0, 0, 'K')};
-        doors.emplace_back(3, 1, Point(10, 14, 0, 0, ' '), false, false,
-            keyPositions , 3,
-            doorSwitchReq, doorSwitchReqCount);
+        std::vector<Point> keyPositions1 = { Point(32, 19, 0, 0, 'K')};
+        std::vector<Point> keyPositions2 = { Point(3, 16, 0, 0, 'K'), Point(1, 8, 0, 0, 'K')};
+        std::vector<Point> keyPositions3 = { Point(47, 13, 0, 0, 'K'), Point(54, 7, 0, 0, 'K')};
         doors.emplace_back(1, 0, Point(9, 19, 0, 0, ' '), false, false,
-            keyPositions, 3,
+            keyPositions1, 1, nullptr, 0);
+        doors.emplace_back(2, 0, Point(35, 11, 0, 0, ' '), false, false,
+            keyPositions2, 2, nullptr, 0);
+        doors.emplace_back(3, 1, Point(79, 14, 0, 0, ' '), false, false,
+            keyPositions3, 2,
             doorSwitchReq, doorSwitchReqCount);
         markDarkArea(50, 8, 75, 20);
     }
