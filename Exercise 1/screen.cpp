@@ -74,7 +74,7 @@ void screen::initScreenData(int id) {
         "WWWWWWWWWWW WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW W", // 20
         "W            W                             W                                   W", // 21
         "W            W             W               W                                   W", // 22
-        "W            ?             W                                                   W", // 23
+        "W K          ?             W                                                   W", // 23
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"  // 24
         };
         for (int i = 0; i < MAX_Y; ++i) {
@@ -89,9 +89,9 @@ void screen::initScreenData(int id) {
             {1, SwitchState::ON}
         };
         const size_t doorSwitchReqCount = sizeof(doorSwitchReq) / sizeof(doorSwitchReq[0]);
-		std::vector<Point> keyPositions = { Point(31, 19, 0, 0, 'K'), Point(79, 13, 0, 0, 'K') };
+		std::vector<Point> keyPositions = { Point(31, 19, 0, 0, 'K'), Point(79, 13, 0, 0, 'K'), Point(2, 23, 0, 0, 'K')};
         doors.emplace_back(3, 1, Point(10, 14, 0, 0, ' '), false, false,
-            keyPositions , 2,
+            keyPositions , 3,
             doorSwitchReq, doorSwitchReqCount);
         setCharAt(Point(25, 11, 0, 0, ' '), '@');
         setCharAt(Point(55, 18, 0, 0, ' '), '@');
