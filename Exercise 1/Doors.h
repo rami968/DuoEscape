@@ -21,7 +21,8 @@ private:
     int doorID;
     bool isCurrentlyOpen = false;
     bool isOpenForever;
-    Point requiredKeyPos[MAX_REQUIRED_KEYS]{};
+    //Point requiredKeyPos[MAX_REQUIRED_KEYS]{};
+    std::vector<Point> requiredKeyPos;
     size_t requiredKeyCount = 0;
     SwitchRequirement switchRequirements[MAX_REQUIRED_SWITCHES]{};
     size_t requiredSwitchCount = 0;
@@ -30,15 +31,16 @@ private:
     bool isOneWay;
 
 public:
+    //Doors(int id, int destID, const Point& destPos, bool oneWay, bool openForever,
+        //const Point* keys, size_t keyCount,
+        //const SwitchRequirement* switches, size_t switchCount);
     Doors(int id, int destID, const Point& destPos, bool oneWay, bool openForever,
-        const Point* keys, size_t keyCount,
+        std::vector<Point> keys, size_t keyCount,
         const SwitchRequirement* switches, size_t switchCount);
-
-    bool canPlayerPass(const std::vector<Point>& playerKeyPos,
-        const SwitchBoard& switchBoard) const;
-
-    void openDoor(std::vector<Point>& playerKeyPos);
-
+    
+    bool canPlayerPass(const SwitchBoard& switchBoard) const;
+    void openDoor();
+    bool depositKey(const Point& keyPos);
     int getDestinationScreenID() const { return destinationScreenID; }
     const Point& getDestinationPosition() const { return destinationPosition; }
     char getDisplayChar() const { return (char)('0' + doorID); }

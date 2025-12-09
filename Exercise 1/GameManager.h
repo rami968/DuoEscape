@@ -2,6 +2,8 @@
 #include "screen.h"
 #include "Point.h"
 #include "Player.h"
+#include "Doors.h"     
+#include "BombHelper.h"
 #include <vector>
 #include <cstddef>
 
@@ -14,7 +16,7 @@ private:
         int y;
         int ticksRemaining;
     };
-    std::vector<screen> screens; 
+    std::vector<screen> screens;
     int currentScreenID = 0;
     Player player1;
     Player player2;
@@ -44,11 +46,15 @@ public:
     void displayMenu() const;
     void displayPauseScreen() const;
     void changeScreen(int newScreenID, const Point& destinationPos, Player& p1, Player& p2);
-	void displayInstructions() const;
-	void handleRiddleSolving(Player* player, screen& currentScreen);
+    void displayInstructions() const;
+    void handleRiddleSolving(Player* player, screen& currentScreen);
     void queueBombAt(const Point& pos);
+    void displayingPlayerStatus(Player& p1, Player& p2, screen& currentScreen);
     screen& getCurrentScreen() {
         return screens[currentScreenID];
     }
+	int getCurrentScreenID() const {
+		return currentScreenID;
+	}
 };
 
