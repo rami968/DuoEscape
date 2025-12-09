@@ -35,7 +35,7 @@ void Player::handleKeyPressed(char key_pressed) {
 
 void Player::consumeHeldKey() {
 	if (heldElement == 'K') {
-		removeKeyFromInventory(heldElementPos);
+		removeKeyFromInventory(keyFirstPos);
 		heldElement = ' ';
 	}
 }
@@ -71,8 +71,9 @@ void Player::move() {
 		if (currentDoor != nullptr) {
 			const SwitchBoard& switchBoard = theScreen->getSwitchBoard();
 			if (hasElement() && getHeldElement() == 'K' && currentDoor->getRequiredKeyCount() > 0) {
-				if (currentDoor->depositKey(heldElementPos)) {
+				if (currentDoor->depositKey(keyFirstPos)) {
 					consumeHeldKey();
+					keyFirstPos = Point(-1, -1, 0, 0, ' ');
 				}
 				p = p_orig;
 				return;
@@ -137,16 +138,31 @@ void Player::setPosition(const Point& newPos) {
 }
 
 char Player::getHeldElement() const { return heldElement; }
-Point Player::getHeldElementPos() const { return heldElementPos; }
 bool Player::hasElement() const { return heldElement != ' '; }
 bool Player::hasTorch() const { return heldElement == '!'; }
 void Player::pickUpElement(char element, const Point& pos)
 {
 	heldElement = element;
 	heldElementPos = pos;
-	if (element == 'K' && collectedKeys.empty()) {
-		collectedKeys.push_back(pos);
+	if (element == 'K') {
+		const Point* originalID = theScreen->findOriginalKeyID(pos);
+
+		if (originalID) {
+			keyFirstPos = *originalID;
+
+			if (!hasKeyInInventory(*originalID)) {
+				collectedKeys.push_back(*originalID);
+			}
+
+		}
 	}
+}
+
+Point Player::getHeldElementPos() const {
+	if (heldElement == 'K') {
+		return keyFirstPos;
+	}
+	return heldElementPos;
 }
 
 void Player::resetTransitionSignal() {
@@ -194,7 +210,7 @@ void Player::disposeElement() {
 
 	theScreen->setCharAt(elementDropPos, heldElement);
 	heldElement = ' ';
-	 p.setDirection(Direction::STAY);
+	p.setDirection(Direction::STAY);
     lastMoveDir = Direction::STAY;
 	theScreen->draw();
 	p.draw();

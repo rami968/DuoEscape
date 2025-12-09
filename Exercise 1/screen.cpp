@@ -42,6 +42,15 @@ void screen::draw() const {
     cout.flush();
 }
 
+const Point* screen::findOriginalKeyID(const Point& keyID) const {
+    for (const auto& originalID : initialKeyPositions) {
+        if (originalID.getX() == keyID.getX() && originalID.getY() == keyID.getY()) {
+            return &originalID;
+        }
+    }
+    return nullptr;
+}
+
 void screen::initScreenData(int id) {
     doors.clear();
     switchBoard.clear();
@@ -77,6 +86,14 @@ void screen::initScreenData(int id) {
         "W K          ?             W                                                   W", // 23
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"  // 24
         };
+        initialKeyPositions.clear();
+        for (int y = 0; y < MAX_Y; ++y) {
+            for (int x = 0; x < MAX_X; ++x) {
+                if (Screen1[y][x] == 'K') {
+                    initialKeyPositions.emplace_back(x, y, 0, 0, 'K');
+                }
+            }
+        }
         for (int i = 0; i < MAX_Y; ++i) {
             strcpy_s(mapData[i], MAX_X + 1, Screen1[i]);
         }
@@ -89,22 +106,10 @@ void screen::initScreenData(int id) {
             {1, SwitchState::ON}
         };
         const size_t doorSwitchReqCount = sizeof(doorSwitchReq) / sizeof(doorSwitchReq[0]);
-		std::vector<Point> keyPositions = { Point(31, 19, 0, 0, 'K'), Point(79, 13, 0, 0, 'K'), Point(2, 23, 0, 0, 'K')};
+		std::vector<Point> keyPositions = { Point(31, 19, 0, 0, 'K'), Point(78, 13, 0, 0, 'K'), Point(2, 23, 0, 0, 'K')};
         doors.emplace_back(3, 1, Point(10, 14, 0, 0, ' '), false, false,
             keyPositions , 3,
             doorSwitchReq, doorSwitchReqCount);
-        setCharAt(Point(25, 11, 0, 0, ' '), '@');
-        setCharAt(Point(55, 18, 0, 0, ' '), '@');
-        setCharAt(Point(14, 12, 0, 0, ' '), '!');
-        //for (int x = 18; x <= 26; ++x) {
-            //setCharAt(Point(x, 10, 0, 0, '#'), '#');
-        //}
-        for (int x = 32; x <= 40; ++x) {
-            setCharAt(Point(x, 19, 0, 0, '#'), '#');
-        }
-        //for (int y = 6; y <= 16; ++y) {
-          //  setCharAt(Point(45, y, 0, 0, 'W'), 'W');
-        //}
         markDarkArea(50, 8, 75, 20);
     }
     else if (currentScreenID == 1) {
@@ -139,17 +144,6 @@ void screen::initScreenData(int id) {
             strcpy_s(mapData[i], MAX_X + 1, Screen2[i]);
 		}
         registerSwitch(2, Point(30, 12, 0, 0, '/'), SwitchState::OFF);
-        setCharAt(Point(40, 15, 0, 0, ' '), '@');
-        setCharAt(Point(20, 8, 0, 0, ' '), '!');
-        for (int x = 10; x <= 19; ++x) {
-            setCharAt(Point(x, 6, 0, 0, '#'), '#');
-        }
-        for (int x = 25; x <= 34; ++x) {
-            setCharAt(Point(x, 17, 0, 0, '#'), '#');
-        }
-        for (int y = 5; y <= 15; ++y) {
-            setCharAt(Point(60, y, 0, 0, 'W'), 'W');
-        }
         markDarkArea(15, 5, 35, 18);
     }
     else {
@@ -183,17 +177,6 @@ void screen::initScreenData(int id) {
 		for (int i = 0; i < MAX_Y; ++i) {
             strcpy_s(mapData[i], MAX_X + 1, EndScreen[i]);
 		}
-		setCharAt(Point(30, 14, 0, 0, ' '), '!');
-        for (int x = 35; x <= 45; ++x) {
-            setCharAt(Point(x, 11, 0, 0, '#'), '#');
-        }
-        for (int x = 5; x <= 15; ++x) {
-            setCharAt(Point(x, 20, 0, 0, '#'), '#');
-        }
-        for (int y = 8; y <= 18; ++y) {
-            setCharAt(Point(50, y, 0, 0, 'W'), 'W');
-        }
-		markDarkArea(25, 10, 55, 20);
     }
 }
 Doors* screen::getDoorByChar(char doorChar) {

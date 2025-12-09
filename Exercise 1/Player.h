@@ -18,10 +18,12 @@ class Player {
 	bool awaitingScreenTransition = false; // true when player already passed through a door
 	screen* theScreen;
 	Point heldElementPos;
+	Point keyFirstPos = Point(-1, -1, 0, 0, ' ');
 	Riddle* activeRiddle = nullptr;
 	char heldElement = ' ';
 	int ticksUntilNextMove = 0;
-	std::vector<Point> collectedKeys{};
+	std::vector<Point> collectedKeys;
+	Direction lastMoveDir = Direction::STAY;
 	bool hasKeyInInventory(const Point& keyPos) const;
 	bool removeKeyFromInventory(const Point& keyPos);
 public:

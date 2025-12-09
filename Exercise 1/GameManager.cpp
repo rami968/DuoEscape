@@ -157,7 +157,7 @@ void GameManager::handleRiddleSolving(Player* player, screen& currentScreen) {
 
 void GameManager::displayingPlayerStatus(Player& p1, Player& p2, screen& currentScreen) {
 	int screenIdToDisplay = currentScreenID; 
-	if (p1.isAwaitingTransition() || p2.isAwaitingTransition()) {
+	if (p1.isAwaitingTransition() && p2.isAwaitingTransition()) {
 		screenIdToDisplay = currentScreenID + 1;
 	}
 	currentScreen.setCharAt(Point(17, 3, 0, 0, ' '), '0' + screenIdToDisplay);
@@ -177,7 +177,16 @@ void GameManager::displayingPlayerStatus(Player& p1, Player& p2, screen& current
 	else {
 		currentScreen.setCharAt(Point(53, 2, 0, 0, ' '), ' ');
 	}
+	for (int y = 0; y <= 4; ++y) {
+		gotoxy(0, y); 
+		for (int x = 0; x < screen::MAX_X; ++x) {
+			std::cout << currentScreen.getCharAt(Point(x, y, 0, 0, ' '));
+		}
+	}
+	std::cout.flush(); 
+	gotoxy(player1.getPosition().getX(), player1.getPosition().getY());
 }
+
 
 void GameManager::run() {
 	// Main game loop would go here
@@ -189,9 +198,10 @@ void GameManager::run() {
 	Player* players[] = {&p1, &p2};
 	BombHelper::clear();
 	bool lastTorchState = player1.hasTorch() || player2.hasTorch();
+	displayingPlayerStatus(p1, p2, getCurrentScreen());
 	screens[currentScreenID].setTorchLit(lastTorchState);
 	screens[currentScreenID].draw();
-	displayingPlayerStatus(p1, p2, getCurrentScreen());
+
 	for (auto p : players) {
 		p->draw();
 	}
@@ -201,6 +211,9 @@ void GameManager::run() {
 			p->move();
 		}
 		displayingPlayerStatus(p1, p2, getCurrentScreen());
+		for (auto p : players) {
+			p->draw();
+		}
 		for (auto p : players) {
 			if (p->getActiveRiddle() != nullptr) {
 				handleRiddleSolving(p, getCurrentScreen());
@@ -221,10 +234,6 @@ void GameManager::run() {
 		}
 		Doors* p1_door_signal = player1.getTransitionDoor();
 		Doors* p2_door_signal = player2.getTransitionDoor();
-		//if (p1_door_signal != nullptr && p2_door_signal != nullptr) {
-			//changeScreen(p2_door_signal->getDestinationScreenID(), p2_door_signal->getDestinationPosition(), player1, player2);
-			//player1.resetTransitionSignal();
-			//player2.resetTransitionSignal();
 		if (p1_door_signal && !p1_has_exited) {
 			p1_has_exited = true; p1_exit_door = p1_door_signal;
 		}
@@ -232,17 +241,11 @@ void GameManager::run() {
 			p2_has_exited = true; p2_exit_door = p2_door_signal;
 		}
 
-		// 4. בדיקת מעבר מסך (כלל השחקן השני)
 		if (p1_has_exited && p2_has_exited) {
 
-			// המשיכו לפי הדרישה: המשחק ממשיך עם השחקן השני שעזב.
-			// אם שניהם עזבו, נלך לפי הסיגנל האחרון שהגיע (p2_exit_door).
 			Doors* final_door = p2_exit_door;
-
-			// בצע מעבר מסך
 			changeScreen(final_door->getDestinationScreenID(), final_door->getDestinationPosition(), p1, p2);
 			lastTorchState = player1.hasTorch() || player2.hasTorch();
-			// איפוס הסטטוסים לחדר החדש
 			p1_has_exited = false;
 			p2_has_exited = false;
 			p1.resetTransitionSignal();

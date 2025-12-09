@@ -52,6 +52,11 @@ bool Doors::canPlayerPass(const SwitchBoard& switchBoard) const
 }
 
 bool Doors::depositKey(const Point& keyPos) {
+  //  std::cout << "Key Pos: (" << keyPos.getX() << ", " << keyPos.getY() << ")" << std::endl;
+   // if (!requiredKeyPos.empty()) {
+   //     const Point& firstReq = requiredKeyPos.back();
+    //    std::cout << "First Req: (" << firstReq.getX() << ", " << firstReq.getY() << ")" << std::endl;
+   //}
     if (isCurrentlyOpen) {
         return false; 
     }

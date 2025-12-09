@@ -17,6 +17,7 @@ private:
 	char mapData[MAX_Y][MAX_X + 1];
 	std::vector<Doors> doors;
 	std::vector<Riddle> riddles;
+	std::vector<Point> initialKeyPositions;
 	SwitchBoard switchBoard;
 	bool torchLit = false;
 	bool darkMask[MAX_Y][MAX_X] = { false };
@@ -65,4 +66,5 @@ public:
 	void markDarkArea(int x1, int y1, int x2, int y2);
 	void setTorchLit(bool lit);
 	bool isTorchLit() const { return torchLit; }
+	const Point* findOriginalKeyID(const Point& keyID) const;
 };
