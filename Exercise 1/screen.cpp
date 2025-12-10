@@ -101,7 +101,7 @@ void screen::initScreenData(int id) {
         registerSwitch(1, Point(20, 10, 0, 0, '/'), SwitchState::OFF);
         riddles.clear();
 		riddles.push_back(Riddle(0, Point(13, 23, 0, 0, '?'), "What has keys but can't open locks?", "Keyboard"));
-		riddles.push_back(Riddle(1, Point(32, 17, 0, 0, '?'), "What has keys but can't open locks?", "Keyboard"));
+		riddles.push_back(Riddle(1, Point(32, 17, 0, 0, '?'), "What has Laces but does not wear clothes?", "Shoe"));
         const Doors::SwitchRequirement doorSwitchReq[] = {
             {0, SwitchState::ON},
             {1, SwitchState::ON}
@@ -114,13 +114,14 @@ void screen::initScreenData(int id) {
             keyPositions1, 1, nullptr, 0);
         doors.emplace_back(2, 0, Point(35, 11, 0, 0, ' '), false, false,
             keyPositions2, 2, nullptr, 0);
-        doors.emplace_back(3, 1, Point(79, 14, 0, 0, ' '), false, false,
+        doors.emplace_back(3, 1, Point(1, 23, 0, 0, ' '), false, false,
             keyPositions3, 2,
             doorSwitchReq, doorSwitchReqCount);
         markDarkArea(50, 8, 75, 20);
     }
     else if (currentScreenID == 1) {
         char Screen2[MAX_Y][MAX_X + 1] = {
+       //01234567890123456789012345678901234567890123456789012345678901234567890123456789
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
         "W              Player1:                W                Player2:               W", // 1
         "W Inventory:                           W Inventory:                            W", // 2
@@ -128,30 +129,56 @@ void screen::initScreenData(int id) {
         "W                                      W                                       W", // 4
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 5
         "W                                                                              W", // 6
-        "W                                                                              W", // 7
-        "W                                                                              W", // 8
-        "W                                                                              W", // 9
-        "W                                                                              W", // 10
-        "W                                                                              W", // 11
-        "W                                                                              W", // 12
+        "W                                                                              5", // 7
+        "W4WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 8
+        "W           W                    K W                         W K               W", // 9
+        "W           W            W      WWWW                         WWWW              W", // 10
+        "W                        W                                                     W", // 11
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW?W", // 12
         "W                                                                              W", // 13
-        "W                                                                              W", // 14
-        "W                                                                              W", // 15
-        "W                                                                              W", // 16
-        "W                                                                              W", // 17
-        "W                                                                              W", // 18
-        "W                                                                              W", // 19
-        "W                                                                              W", // 20
-        "W                                                                              W", // 21
-        "W                                                                              W", // 22
-        "W                                                                              W", // 23
+        "W                   WWWWWWWWWWWWWWWW              WWWW             W           W", // 14
+        "W                 WWWWWWWWWWWWWWWWWWWW            W                W           W", // 15
+        "W    WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 16
+        "W                               W                  W                           W", // 17
+        "W             W                 W                               W              W", // 18
+        "W             W                                    W            W              W", // 19
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW?W", // 20
+        "W                                             W                                W", // 21
+        "W                                             WWWW                             W", // 22
+        "3   !                                                                          W", // 23
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"  // 24
         };
+        initialKeyPositions.clear();
+        for (int y = 0; y < MAX_Y; ++y) {
+            for (int x = 0; x < MAX_X; ++x) {
+                if (Screen2[y][x] == 'K') {
+                    initialKeyPositions.emplace_back(x, y, 0, 0, 'K');
+                }
+            }
+        }
 		for (int i = 0; i < MAX_Y; ++i) {
             strcpy_s(mapData[i], MAX_X + 1, Screen2[i]);
 		}
-        registerSwitch(2, Point(30, 12, 0, 0, '/'), SwitchState::OFF);
-        markDarkArea(15, 5, 35, 18);
+        registerSwitch(2, Point(48, 21, 0, 0, '/'), SwitchState::OFF);
+        registerSwitch(3, Point(52, 15, 0, 0, '/'), SwitchState::OFF);
+        riddles.clear();
+        riddles.push_back(Riddle(2, Point(78, 20, 0, 0, '?'), "What has a Tongue but cannot speak?", "Wagon"));
+        riddles.push_back(Riddle(3, Point(78, 12, 0, 0, '?'), "What has a Bed but never sleeps?", "River"));
+        const Doors::SwitchRequirement doorSwitchReq[] = {
+            {2, SwitchState::ON},
+            {3, SwitchState::ON}
+        };
+        const size_t doorSwitchReqCount = sizeof(doorSwitchReq) / sizeof(doorSwitchReq[0]);
+        std::vector<Point> keyPositions4 = { Point(63, 9, 0, 0, 'K') };
+        std::vector<Point> keyPositions5 = { Point(33, 9, 0, 0, 'K') };
+        doors.emplace_back(3, 0, Point(78, 14, 0, 0, ' '), false, false,
+            std::vector<Point>{}, 0, nullptr, 0);
+        doors.emplace_back(4, 1, Point(1, 8, 0, 0, ' '), false, false,
+            keyPositions4, 1, nullptr, 0);
+        doors.emplace_back(5, 2, Point(1, 23, 0, 0, ' '), false, false,
+            keyPositions5, 1,
+            doorSwitchReq, doorSwitchReqCount);
+        markDarkArea(5, 22, 78, 1);
     }
     else {
         char EndScreen[MAX_Y][MAX_X + 1] = {
@@ -159,26 +186,26 @@ void screen::initScreenData(int id) {
         "W                                                                              W", // 1
         "W                                                                              W", // 2
         "W                                                                              W", // 3
-        "W                                                                              W", // 4
-        "W                                                                              W", // 5
-        "W                                                                              W", // 6
-        "W                                                                              W", // 7
-        "W                                                                              W", // 8
-        "W                                                                              W", // 9
-        "W                                                                              W", // 10
+        "W                   WWWWWWWWWWWWW  W           W  WWWWWWWWWWW                  W", // 4
+        "W                         W        W           W  W                            W", // 5
+        "W                         W        W           W  W                            W", // 6
+        "W                         W        WWWWWWWWWWWWW  WWWWWWWWWWW                  W", // 7
+        "W                         W        W           W  W                            W", // 8
+        "W                         W        W           W  W                            W", // 9
+        "W                         W        W           W  WWWWWWWWWWW                  W", // 10
         "W                                                                              W", // 11
         "W                                                                              W", // 12
-        "W                                                                              W", // 13
-        "W                                                                              W", // 14
-        "W                                                                              W", // 15
-        "W                                                                              W", // 16
-        "W                                                                              W", // 17
-        "W                                                                              W", // 18
-        "W                                                                              W", // 19
+        "W                         WWWWWWWWWW  WW      W  WWWWWW                        W", // 13
+        "W                         W           W W     W  W     W                       W", // 14
+        "W                         W           W  W    W  W      W                      W", // 15
+        "W                         WWWWWWWWWW  W   W   W  W       W                     W", // 16
+        "W                         W           W    W  W  W      W                      W", // 17
+        "W                         W           W     W W  W     W                       W", // 18
+        "W                         WWWWWWWWWW  W      WW  WWWWWW                        W", // 19
         "W                                                                              W", // 20
         "W                                                                              W", // 21
         "W                                                                              W", // 22
-        "W                                                                              W", // 23
+        "W                  Press any key to return to the menu....                     W", // 23
         "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"  // 24
         };
 		for (int i = 0; i < MAX_Y; ++i) {

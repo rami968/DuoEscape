@@ -3,7 +3,6 @@
 #include <cctype>
 #include <cstring>
 #include "Doors.h"
-#include "BombHelper.h"
 
 Player::Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen) :
 	theScreen(&screen), p(point) {
@@ -83,17 +82,24 @@ void Player::move() {
 			if (!currentDoor->canPlayerPass(switchBoard)) {
 				p = p_orig;
 			}
-			else {
+			else { 
+				screen prevScreen = *theScreen;
 				currentDoor->openDoor();
 				char playerChar = p.getChar();
-				// teleport player to the door's destination but keep its glyph
-	            p = currentDoor->getDestinationPosition();
-	            p.setChar(playerChar);
-	            p.setDirection(Direction::STAY);
-	            currDoor = currentDoor;
-	            awaitingScreenTransition = true;
-	            ticksUntilNextMove = 0;
-	            return;
+				if (currentDoor->getDestinationScreenID() != theScreen->getCurrentScreenID()) {
+					currDoor = currentDoor;
+					awaitingScreenTransition = true;
+				}
+				else {
+					p.draw(theScreen->getCharAt(p));
+					p = currentDoor->getDestinationPosition();
+					theScreen->setCharAt(p, ' ');
+					p.setChar(playerChar);
+					p.setDirection(Direction::STAY);
+					p.draw(); 
+				}
+				ticksUntilNextMove = 0;
+				return;
 			}
 		}
 		else {

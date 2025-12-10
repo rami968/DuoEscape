@@ -53,4 +53,7 @@ public:
 	void setDirection(Direction dir) {
 		p.setDirection(dir);
 	}
+	void resetHeldElement() {
+		heldElement = ' ';
+	}
 };

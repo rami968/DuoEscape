@@ -18,6 +18,7 @@ private:
     bool p2_has_exited = false;
     Doors* p1_exit_door = nullptr;
     Doors* p2_exit_door = nullptr;
+	bool isFinalScreen = false;
 public:
     GameManager();
     void resetGameState();
@@ -35,5 +36,9 @@ public:
 	int getCurrentScreenID() const {
 		return currentScreenID;
 	}
+	void handleRiddleCheck(Player* player, screen& currentScreen);
+    void checkAndHandleTorchUpdate(Player& p1, Player& p2, bool& lastTorchState);
+    bool handleScreenTransition(Player& p1, Player& p2, bool& lastTorchState);
+	bool handlePauseInput();
 };
 

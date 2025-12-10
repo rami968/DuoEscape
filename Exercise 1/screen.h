@@ -64,4 +64,5 @@ public:
 	void setTorchLit(bool lit);
 	bool isTorchLit() const { return torchLit; }
 	const Point* findOriginalKeyID(const Point& keyID) const;
+	int getCurrentScreenID() const { return currentScreenID; }
 };
