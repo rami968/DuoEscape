@@ -17,6 +17,7 @@ private:
 	char mapData[MAX_Y][MAX_X + 1];
 	std::vector<Doors> doors;
 	std::vector<Riddle> riddles;
+	std::vector<Point> initialKeyPositions;
 	SwitchBoard switchBoard;
 	bool torchLit = false;
 	bool darkMask[MAX_Y][MAX_X] = { false };
@@ -38,7 +39,7 @@ public:
 	void draw() const;
 	bool isWall(const Point& p) const {
 		 char ch = getCharAt(p);
-		 return (ch == 'W' || ch == 'w');
+		 return (ch == 'W');
 	}
 	bool isDoor(const Point& p) const {
 		return isdigit(getCharAt(p));
@@ -55,9 +56,6 @@ public:
 	bool isTorch(const Point& p) const {
 		return getCharAt(p) == '!';
 	}
-	bool isBomb(const Point& p) const {
-		return getCharAt(p) == '@';
-	}
 	bool isRiddle(const Point& p) const {
 		return getCharAt(p) == '?';
 	}
@@ -65,4 +63,5 @@ public:
 	void markDarkArea(int x1, int y1, int x2, int y2);
 	void setTorchLit(bool lit);
 	bool isTorchLit() const { return torchLit; }
+	const Point* findOriginalKeyID(const Point& keyID) const;
 };

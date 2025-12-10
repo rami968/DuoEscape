@@ -22,7 +22,6 @@ class Player {
 	char heldElement = ' ';
 	int ticksUntilNextMove = 0;
 	std::vector<Point> collectedKeys;
-	Direction lastMoveDir = Direction::STAY;
 	bool hasKeyInInventory(const Point& keyPos) const;
 	bool removeKeyFromInventory(const Point& keyPos);
 public:

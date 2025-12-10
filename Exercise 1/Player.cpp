@@ -6,10 +6,8 @@
 #include "BombHelper.h"
 
 Player::Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen) :
-	theScreen(&screen) {
-	p = point;
+	theScreen(&screen), p(point) {
 	std::memcpy(the_keys, keys, NUM_KEYS * sizeof(the_keys[0]));
-	heldElement = ' ';
 }
 
 void Player::handleKeyPressed(char key_pressed) {
@@ -17,21 +15,21 @@ void Player::handleKeyPressed(char key_pressed) {
 		return;
 	}
 	char lk = std::tolower(key_pressed);
-    char disposeKey = the_keys[NUM_KEYS - 1];
-    if (lk == disposeKey) {
-        disposeElement();
-        return;
+	char disposeKey = the_keys[NUM_KEYS - 1];
+	if (lk == disposeKey) {
+		disposeElement();
+		return;
 	}
-	
+
 	for (size_t index = 0; index < NUM_KEYS; ++index) {
 		char k = the_keys[index];
 		if (k == lk) {
 			Direction dir = static_cast<Direction>(index);
-            p.setDirection(dir);
-            if (dir != Direction::STAY) {
-              lastMoveDir = dir;
+			p.setDirection(dir);
+			if (dir != Direction::STAY) {
+				lastMoveDir = dir;
 			}
-		return;
+			return;
 
 		}
 	}
@@ -39,7 +37,7 @@ void Player::handleKeyPressed(char key_pressed) {
 
 void Player::consumeHeldKey() {
 	if (heldElement == 'K') {
-		removeKeyFromInventory(heldElementPos);
+		removeKeyFromInventory(keyFirstPos);
 		heldElement = ' ';
 	}
 }
@@ -55,12 +53,13 @@ void Player::move() {
 	if (awaitingScreenTransition) {
 		return;
 	}
-	// function by copylot 
+	// function by Copilot 
 	if (ticksUntilNextMove > 0) {
 		--ticksUntilNextMove;
 		return; 
 	}
 	ticksUntilNextMove = MOVE_TICK_INTERVAL;
+
 	char backgroundChar = theScreen->getCharAt(p);
 	p.draw(backgroundChar);
 	Point p_orig = p;
@@ -74,8 +73,9 @@ void Player::move() {
 		if (currentDoor != nullptr) {
 			const SwitchBoard& switchBoard = theScreen->getSwitchBoard();
 			if (hasElement() && getHeldElement() == 'K' && currentDoor->getRequiredKeyCount() > 0) {
-				if (currentDoor->depositKey(heldElementPos)) {
+				if (currentDoor->depositKey(keyFirstPos)) {
 					consumeHeldKey();
+					keyFirstPos = Point(-1, -1, 0, 0, ' ');
 				}
 				p = p_orig;
 				return;
@@ -85,7 +85,6 @@ void Player::move() {
 			}
 			else {
 				currentDoor->openDoor();
-			
 				char playerChar = p.getChar();
 				// teleport player to the door's destination but keep its glyph
 	            p = currentDoor->getDestinationPosition();
@@ -101,6 +100,7 @@ void Player::move() {
 			p = p_orig;
 		}
 	}
+
 	
 	else if (theScreen->isSwitchOff(p) || theScreen->isSwitchOn(p)) {
 		bool steppedOntoSwitch = (p.getX() != p_orig.getX()) || (p.getY() != p_orig.getY());
@@ -108,7 +108,7 @@ void Player::move() {
 			theScreen->toggleSwitchAt(p);
 		}
 	}
-	else if (theScreen->isKey(p) || theScreen->isBomb(p) || theScreen->isTorch(p)) {
+	else if (theScreen->isKey(p) || theScreen->isTorch(p)) {
 		char elemChar = theScreen->getCharAt(p);
 		if (hasElement()) {
 			p = p_orig;
@@ -140,16 +140,31 @@ void Player::setPosition(const Point& newPos) {
 }
 
 char Player::getHeldElement() const { return heldElement; }
-Point Player::getHeldElementPos() const { return heldElementPos; }
 bool Player::hasElement() const { return heldElement != ' '; }
 bool Player::hasTorch() const { return heldElement == '!'; }
 void Player::pickUpElement(char element, const Point& pos)
 {
 	heldElement = element;
 	heldElementPos = pos;
-	if (element == 'K' && collectedKeys.empty()) {
-		collectedKeys.push_back(pos);
+	if (element == 'K') {
+		const Point* originalID = theScreen->findOriginalKeyID(pos);
+
+		if (originalID) {
+			keyFirstPos = *originalID;
+
+			if (!hasKeyInInventory(*originalID)) {
+				collectedKeys.push_back(*originalID);
+			}
+
+		}
 	}
+}
+
+Point Player::getHeldElementPos() const {
+	if (heldElement == 'K') {
+		return keyFirstPos;
+	}
+	return heldElementPos;
 }
 
 void Player::resetTransitionSignal() {
@@ -177,9 +192,6 @@ void Player::disposeElement() {
     elementDropPos.setDirection(dir); 
     elementDropPos.move();          
 
-	if (heldElement == '@') {
-		BombHelper::queueBomb(elementDropPos);
-	}
 
 	if (theScreen->isWall(elementDropPos) ||
 		theScreen->isDoor(elementDropPos) ||
