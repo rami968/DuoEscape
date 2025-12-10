@@ -4,11 +4,10 @@
 
 Doors::Doors(int id, int destID, const Point& destPos, bool oneWay, bool openForever,
     std::vector<Point> keys, size_t keyCount,
-    const SwitchRequirement* switches, size_t switchCount): 
+    const SwitchRequirement* switches, size_t switchCount) :
     doorID(id),
     destinationScreenID(destID),
     destinationPosition(destPos),
-    isOneWay(oneWay),
     isOpenForever(openForever)
 {
     if (keyCount > 0) {
@@ -53,20 +52,20 @@ bool Doors::canPlayerPass(const SwitchBoard& switchBoard) const
 
 bool Doors::depositKey(const Point& keyPos) {
     if (isCurrentlyOpen) {
-        return false; 
+        return false;
     }
-	auto requiredIt = requiredKeyPos.end();
+    auto requiredIt = requiredKeyPos.end();
     for (auto it = requiredKeyPos.begin(); it != requiredKeyPos.end(); ++it) {
         if (it->getX() == keyPos.getX() && it->getY() == keyPos.getY()) {
-            requiredIt = it; 
+            requiredIt = it;
             break;
         }
     }
     if (requiredIt != requiredKeyPos.end()) {
         requiredKeyPos.erase(requiredIt);
-        return true; 
+        return true;
     }
-	return false;
+    return false;
 }
 
 void Doors::openDoor() {

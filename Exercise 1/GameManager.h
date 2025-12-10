@@ -6,8 +6,6 @@
 #include <vector>
 #include <cstddef>
 
-
-
 class GameManager {
 private:
     std::vector<screen> screens;
@@ -18,6 +16,7 @@ private:
     bool p2_has_exited = false;
     Doors* p1_exit_door = nullptr;
     Doors* p2_exit_door = nullptr;
+    bool isFinalScreen = false;
 public:
     GameManager();
     void resetGameState();
@@ -32,8 +31,7 @@ public:
     screen& getCurrentScreen() {
         return screens[currentScreenID];
     }
-	int getCurrentScreenID() const {
-		return currentScreenID;
-	}
+    int getCurrentScreenID() const {
+        return currentScreenID;
+    }
 };
-

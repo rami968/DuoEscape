@@ -14,8 +14,8 @@ enum Keys { ESC = 27 };
 
 GameManager::GameManager() :
 	screens{ screen(0), screen(1), screen(2) },
-	player1(Point(1, 6, 0, 0, '$'), "wdxase", screens[0]),
-	player2(Point(1, 19, 0, 0, '&'), "ilmjko", screens[0])
+	player1(Point(1, 19, 0, 0, '$'), "wdxase", screens[0]),
+	player2(Point(1, 23, 0, 0, '&'), "ilmjko", screens[0])
 {
 	currentScreenID = 0;
 }
@@ -30,10 +30,16 @@ void GameManager::changeScreen(int newScreenID, const Point& destinationPos, Pla
 		p2.setScreen(&currentScreen);
 		p1.resetTransitionSignal();
 		p2.resetTransitionSignal();
+		bool isFinalScreen = (currentScreenID == screens.size() - 1);
+		if (isFinalScreen) {
+			currentScreen.draw();
+			_getch();
+			showMenuAndHandleInput();
+			return;
+		}
+
 		p1.setPosition(destinationPos);
 		p2.setPosition(destinationPos);
-		bool torchActive = p1.hasTorch() || p2.hasTorch();
-		currentScreen.setTorchLit(torchActive);
 		currentScreen.draw();
 		p1.draw();
 		p2.draw();
@@ -45,7 +51,7 @@ void GameManager::resetGameState() {
 	p2_has_exited = false;
 	p1_exit_door = nullptr;
 	p2_exit_door = nullptr;
-	player1.setPosition(Point(1, 22, 0, 0, '$'));
+	player1.setPosition(Point(1, 19, 0, 0, '$'));
 	player2.setPosition(Point(1, 23, 0, 0, '&'));
 }
 
@@ -54,9 +60,9 @@ void GameManager::displayMenu() const {
 	std::cout << "================================================================================" << std::endl;
 	std::cout << "                                 TEXT ADVENTURE WORLD           " << std::endl;
 	std::cout << "================================================================================" << std::endl;
-	std::cout << "                               (1) Start a new game" << std::endl;   
-	std::cout << "                               (8) Present instructions and keys" << std::endl;  
-	std::cout << "                               (9) EXIT" << std::endl;  
+	std::cout << "                               (1) Start a new game" << std::endl;
+	std::cout << "                               (8) Present instructions and keys" << std::endl;
+	std::cout << "                               (9) EXIT" << std::endl;
 	std::cout << "================================================================================" << std::endl;
 	std::cout << "                                   Enter your choice: ";
 }
@@ -108,14 +114,14 @@ void GameManager::showMenuAndHandleInput() {
 			run();
 			break;
 		case '8':
-			displayInstructions(); 
+			displayInstructions();
 			break;
 		case '9':
 			running = false;
 			break;
 		default:
 			std::cout << "\n Invalid choice. Please try again (press any key to continue)...";
-			_getch(); 
+			_getch();
 			break;
 		}
 	}
@@ -153,7 +159,7 @@ void GameManager::handleRiddleSolving(Player* player, screen& currentScreen) {
 }
 
 void GameManager::displayingPlayerStatus(Player& p1, Player& p2, screen& currentScreen) {
-	int screenIdToDisplay = currentScreenID; 
+	int screenIdToDisplay = currentScreenID;
 	if (p1.isAwaitingTransition() && p2.isAwaitingTransition()) {
 		screenIdToDisplay = currentScreenID + 1;
 	}
@@ -175,12 +181,12 @@ void GameManager::displayingPlayerStatus(Player& p1, Player& p2, screen& current
 		currentScreen.setCharAt(Point(53, 2, 0, 0, ' '), ' ');
 	}
 	for (int y = 0; y <= 4; ++y) {
-		gotoxy(0, y); 
+		gotoxy(0, y);
 		for (int x = 0; x < screen::MAX_X; ++x) {
 			std::cout << currentScreen.getCharAt(Point(x, y, 0, 0, ' '));
 		}
 	}
-	std::cout.flush(); 
+	std::cout.flush();
 	gotoxy(player1.getPosition().getX(), player1.getPosition().getY());
 }
 
@@ -192,8 +198,7 @@ void GameManager::run() {
 	screens[0].draw();
 	Player& p1 = player1;
 	Player& p2 = player2;
-	Player* players[] = {&p1, &p2};
-	BombHelper::clear();
+	Player* players[] = { &p1, &p2 };
 	bool lastTorchState = player1.hasTorch() || player2.hasTorch();
 	displayingPlayerStatus(p1, p2, getCurrentScreen());
 	screens[currentScreenID].setTorchLit(lastTorchState);
@@ -286,6 +291,3 @@ void GameManager::run() {
 	}
 	cls();
 }
-
-
-

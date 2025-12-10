@@ -2,11 +2,13 @@
 #include "screen.h"
 
 void Point::move() {
+	// Move according to current diff_x/diff_y and wrap around screen edges (toroidal)
 	x = (x + diff_x + screen::MAX_X) % screen::MAX_X;
 	y = (y + diff_y + screen::MAX_Y) % screen::MAX_Y;
 }
 
 void Point::setDirection(Direction dir) {
+	// Set movement delta (diff_x, diff_y) based on direction
 	switch (dir) {
 	case Direction::UP:
 		diff_x = 0;
@@ -32,14 +34,15 @@ void Point::setDirection(Direction dir) {
 }
 
 Direction Point::getDirection() const {
-    if (diff_x == 1 && diff_y == 0)
-        return Direction::RIGHT;
-    if (diff_x == -1 && diff_y == 0)
-        return Direction::LEFT;
-    if (diff_x == 0 && diff_y == -1)
-        return Direction::UP;
-    if (diff_x == 0 && diff_y == 1)
-        return Direction::DOWN;
-    return Direction::STAY;
+	// Infer direction from the current movement delta
+	if (diff_x == 1 && diff_y == 0)
+		return Direction::RIGHT;
+	if (diff_x == -1 && diff_y == 0)
+		return Direction::LEFT;
+	if (diff_x == 0 && diff_y == -1)
+		return Direction::UP;
+	if (diff_x == 0 && diff_y == 1)
+		return Direction::DOWN;
+	// Any other case is treated as STAY (no movement)
+	return Direction::STAY;
 }
-

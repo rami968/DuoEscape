@@ -27,20 +27,18 @@ private:
     size_t requiredSwitchCount = 0;
     int destinationScreenID;
     Point destinationPosition;
-    bool isOneWay;
 
 public:
     Doors(int id, int destID, const Point& destPos, bool oneWay, bool openForever,
         std::vector<Point> keys, size_t keyCount,
         const SwitchRequirement* switches, size_t switchCount);
-    
+
     bool canPlayerPass(const SwitchBoard& switchBoard) const;
     void openDoor();
     bool depositKey(const Point& keyPos);
     int getDestinationScreenID() const { return destinationScreenID; }
     const Point& getDestinationPosition() const { return destinationPosition; }
     char getDisplayChar() const { return (char)('0' + doorID); }
-    bool getIsOneWay() const { return isOneWay; }
     size_t getRequiredKeyCount() const { return requiredKeyCount; }
     size_t getRequiredSwitchCount() const { return requiredSwitchCount; }
 };
