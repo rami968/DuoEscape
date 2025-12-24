@@ -26,7 +26,6 @@ class Player {
 	Direction lastMoveDir = Direction::STAY;
 	bool hasKeyInInventory(const Point& keyPos) const;
 	bool removeKeyFromInventory(const Point& keyPos);
-	bool handleDoor(const Point& originalPos);
 
 public:
 	Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen);
@@ -54,5 +53,9 @@ public:
 	void consumeHeldKey();
 	void setDirection(Direction dir) {
 		p.setDirection(dir);
+	}
+	void handleDoorInteraction(const Point& p_orig, char targetChar, Doors* currentDoor);
+	void resetHeldElement() {
+		heldElement = ' ';
 	}
 };

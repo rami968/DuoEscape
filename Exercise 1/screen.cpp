@@ -81,7 +81,7 @@ void screen::initScreenData(int id) {
              "W        W                   WWW?WWW                                           W", // 17
              "W        W                   W     W                                           W", // 18
              "W        1                   W  K  W                                           W", // 19
-             "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW  W", // 20
+             "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW    W", // 20
              "W            W                             W                                   W", // 21
              "W            W             W               W                                   W", // 22
              "W            ?             W                              !                    W", // 23
@@ -125,11 +125,11 @@ void screen::initScreenData(int id) {
         std::vector<Point> keyPositions3 = { Point(47, 13, 0, 0, 'K'), Point(54, 7, 0, 0, 'K') };
 
         // Create doors for this screen
-        doors.emplace_back(1, 0, Point(9, 19, 0, 0, ' '), false, false,
+        doors.emplace_back(1, 0, Point(9, 19, 0, 0, ' '),
             keyPositions1, 1, nullptr, 0);
-        doors.emplace_back(2, 0, Point(35, 11, 0, 0, ' '), false, false,
+        doors.emplace_back(2, 0, Point(35, 11, 0, 0, ' '),
             keyPositions2, 2, nullptr, 0);
-        doors.emplace_back(3, 1, Point(1, 23, 0, 0, ' '), false, false,
+        doors.emplace_back(3, 1, Point(1, 23, 0, 0, ' '),
             keyPositions3, 2,
             doorSwitchReq, doorSwitchReqCount);
 
@@ -203,11 +203,11 @@ void screen::initScreenData(int id) {
         std::vector<Point> keyPositions5 = { Point(33, 9, 0, 0, 'K') };
 
         // Create doors for this screen
-        doors.emplace_back(3, 0, Point(78, 14, 0, 0, ' '), false, false,
+        doors.emplace_back(3, 0, Point(78, 14, 0, 0, ' '),
             std::vector<Point>{}, 0, nullptr, 0);
-        doors.emplace_back(4, 1, Point(1, 8, 0, 0, ' '), false, false,
+        doors.emplace_back(4, 1, Point(1, 8, 0, 0, ' '),
             keyPositions4, 1, nullptr, 0);
-        doors.emplace_back(5, 2, Point(1, 23, 0, 0, ' '), false, false,
+        doors.emplace_back(5, 2, Point(1, 23, 0, 0, ' '),
             keyPositions5, 1,
             doorSwitchReq, doorSwitchReqCount);
 
