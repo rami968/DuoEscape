@@ -11,11 +11,11 @@
 
 class Player {
 	static constexpr int NUM_KEYS = 6;
-	static constexpr int MOVE_TICK_INTERVAL = 1; // number of game loops to wait between moves
+	static constexpr int MOVE_TICK_INTERVAL = 1; 
 	char the_keys[NUM_KEYS];
 	Point p;
 	Doors* currDoor = nullptr;
-	bool awaitingScreenTransition = false; // true when player already passed through a door
+	bool awaitingScreenTransition = false; 
 	screen* theScreen;
 	Point heldElementPos;
 	Point keyFirstPos = Point(-1, -1, 0, 0, ' ');
@@ -26,6 +26,8 @@ class Player {
 	Direction lastMoveDir = Direction::STAY;
 	bool hasKeyInInventory(const Point& keyPos) const;
 	bool removeKeyFromInventory(const Point& keyPos);
+	bool handleDoor(const Point& originalPos);
+
 public:
 	Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen);
 	void disposeElement();
@@ -52,8 +54,5 @@ public:
 	void consumeHeldKey();
 	void setDirection(Direction dir) {
 		p.setDirection(dir);
-	}
-	void resetHeldElement() {
-		heldElement = ' ';
 	}
 };

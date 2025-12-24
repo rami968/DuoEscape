@@ -17,31 +17,43 @@ public:
 		diff_y = diffy;
 		ch = c;
 	}
+	// Draws the stored character at the current position
 	void draw() {
 		draw(ch);
 	}
+
+	// Draws a given character at the current position
 	void draw(char c) {
 		gotoxy(x, y);
 		std::cout << c;
 	}
+
+	// Moves the point one step using diff_x and diff_y
 	void move();
 
+	// Sets the movement direction using a Direction value
 	void setDirection(Direction dir);
+
+	// Returns the x coordinate
 	int getX() const {
 		return x;
 	}
 
+	// Returns the current movement direction based on diff_x and diff_y
 	Direction getDirection() const;
-	
+
+	// Returns the y coordinate
 	int getY() const {
 		return y;
 	}
+
+	// Returns the character stored at this point
 	char getChar() const {
 		return ch;
 	}
+
+	// Sets the character stored at this point
 	void setChar(char c) {
 		ch = c;
 	}
 };
-
-

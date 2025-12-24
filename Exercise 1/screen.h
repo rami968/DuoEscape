@@ -12,6 +12,7 @@ using std::cout, std::endl;
 class screen {
 public:
 	enum { MAX_X = 80, MAX_Y = 25 };
+
 private:
 	int currentScreenID = 0;
 	char mapData[MAX_Y][MAX_X + 1];
@@ -22,11 +23,16 @@ private:
 	bool torchLit = false;
 	bool darkMask[MAX_Y][MAX_X] = { false };
 	void clearDarkMask();
+	static char switchStateToChar(SwitchState state);
+
 public:
+
 	screen(int id = 0) { initScreenData(id); }
+
 	char getCharAt(const Point& p) const {
 		return mapData[p.getY()][p.getX()];
 	}
+
 	Doors* getDoorByChar(char doorChar);
 	Riddle* getRiddleByPosition(const Point& p);
 	SwitchBoard::SwitchEntry* getSwitchAt(const Point& pos);
@@ -38,8 +44,8 @@ public:
 	void initScreenData(int ScreenID);
 	void draw() const;
 	bool isWall(const Point& p) const {
-		 char ch = getCharAt(p);
-		 return (ch == 'W');
+		char ch = getCharAt(p);
+		return (ch == 'W');
 	}
 	bool isDoor(const Point& p) const {
 		return isdigit(getCharAt(p));
@@ -64,5 +70,4 @@ public:
 	void setTorchLit(bool lit);
 	bool isTorchLit() const { return torchLit; }
 	const Point* findOriginalKeyID(const Point& keyID) const;
-	int getCurrentScreenID() const { return currentScreenID; }
 };
