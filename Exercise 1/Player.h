@@ -27,6 +27,9 @@ class Player {
 	bool hasKeyInInventory(const Point& keyPos) const;
 	bool removeKeyFromInventory(const Point& keyPos);
 	bool handleDoor(const Point& originalPos);
+	bool bombRequested = false;
+	Point bombRequestPos = Point(-1, -1, 0, 0, ' ');
+
 
 public:
 	Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen);
@@ -55,4 +58,5 @@ public:
 	void setDirection(Direction dir) {
 		p.setDirection(dir);
 	}
+	bool tryPopBombRequest(Point& out);
 };

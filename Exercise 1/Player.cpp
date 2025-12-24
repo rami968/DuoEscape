@@ -237,6 +237,18 @@ void Player::disposeElement() {
 		removeKeyFromInventory(heldElementPos);
 	}
 
+	if (heldElement == '@') {
+		bombRequested = true;
+		bombRequestPos = elementDropPos;
+		theScreen->setCharAt(elementDropPos, '@');
+		heldElement = ' ';
+		p.setDirection(Direction::STAY);
+		lastMoveDir = Direction::STAY;
+		theScreen->draw();
+		p.draw();
+		return;
+	}
+
 	theScreen->setCharAt(elementDropPos, heldElement);
 	heldElement = ' ';
 	p.setDirection(Direction::STAY);
@@ -262,4 +274,11 @@ bool Player::removeKeyFromInventory(const Point& keyPos) {
 		}
 	}
 	return false;
+}
+
+bool Player::tryPopBombRequest(Point& out) {
+	if (!bombRequested) return false;
+	out = bombRequestPos;
+	bombRequested = false;
+	return true;
 }

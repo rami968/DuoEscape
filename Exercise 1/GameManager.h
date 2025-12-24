@@ -17,6 +17,34 @@ private:
     Doors* p1_exit_door = nullptr;
     Doors* p2_exit_door = nullptr;
     bool isFinalScreen = false;
+
+    // פצצה אחת: מיקום + טיימר
+    class Bomb {
+    public:
+        Bomb(const Point& position, int countdown)
+            : pos(position), ticksRemaining(countdown) {
+        }
+
+        void tick() {
+            if (ticksRemaining > 0) {
+                --ticksRemaining;
+            }
+        }
+
+        bool isReadyToExplode() const {
+            return ticksRemaining <= 0;
+        }
+
+        const Point& getPosition() const {
+            return pos;
+        }
+
+    private:
+        Point pos;
+        int ticksRemaining;
+    };
+
+
 public:
     GameManager();
     void resetGameState();

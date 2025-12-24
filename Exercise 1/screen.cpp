@@ -81,7 +81,7 @@ void screen::initScreenData(int id) {
              "W        W                   WWW?WWW                                           W", // 17
              "W        W                   W     W                                           W", // 18
              "W        1                   W  K  W                                           W", // 19
-             "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW  W", // 20
+             "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW  W", // 20
              "W            W                             W                                   W", // 21
              "W            W             W               W                                   W", // 22
              "W            ?             W                              !                    W", // 23
@@ -329,3 +329,7 @@ void screen::markDarkArea(int x1, int y1, int x2, int y2) {
 void screen::setTorchLit(bool lit) {
     torchLit = lit;
 }
+
+
+
+
