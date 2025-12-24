@@ -20,7 +20,6 @@ public:
 private:
     int doorID;
     bool isCurrentlyOpen = false;
-    bool isOpenForever;
     std::vector<Point> requiredKeyPos;
     size_t requiredKeyCount = 0;
     SwitchRequirement switchRequirements[MAX_REQUIRED_SWITCHES]{};
@@ -29,7 +28,7 @@ private:
     Point destinationPosition;
 
 public:
-    Doors(int id, int destID, const Point& destPos, bool oneWay, bool openForever,
+    Doors(int id, int destID, const Point& destPos,
         std::vector<Point> keys, size_t keyCount,
         const SwitchRequirement* switches, size_t switchCount);
 

@@ -136,6 +136,7 @@
     <ClCompile Include="Point.cpp" />
     <ClCompile Include="Riddle.cpp" />
     <ClCompile Include="screen.cpp" />
+    <ClCompile Include="Spring.cpp" />
     <ClCompile Include="SwitchBoard.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
@@ -148,6 +149,7 @@
     <ClInclude Include="Point.h" />
     <ClInclude Include="Riddle.h" />
     <ClInclude Include="screen.h" />
+    <ClInclude Include="Spring.h" />
     <ClInclude Include="SwitchBoard.h" />
     <ClInclude Include="SwitchState.h" />
     <ClInclude Include="utils.h" />

@@ -1,13 +1,12 @@
 #include "Doors.h"
 #include "SwitchBoard.h"
 
-Doors::Doors(int id, int destID, const Point& destPos, bool oneWay, bool openForever,
+Doors::Doors(int id, int destID, const Point& destPos,
     std::vector<Point> keys, size_t keyCount,
     const SwitchRequirement* switches, size_t switchCount) :
     doorID(id),
     destinationScreenID(destID),
-    destinationPosition(destPos),
-    isOpenForever(openForever)
+    destinationPosition(destPos)
 {
     // Copy required keys 
     if (keyCount > 0) {
