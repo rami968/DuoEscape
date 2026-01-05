@@ -1,8 +1,8 @@
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-W              Player1:                W                Player2:               W
-W Inventory:                           W Inventory:                            W
-W Current Room:                        W Current Room:                         W
-W                                      W                                       W
+WL                                                                             W
+W                                                                              W
+W                                                                              W
+W                                                                              W
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 W                                                                              W
 W                                                                              5
@@ -18,11 +18,9 @@ W    WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 W                               W                  W                           W
 W             W                 W                               W              W
 W             W                                    W            W              W
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW?W
+Wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww?W
 W                                             W                                W
 W                                             WWWW                             W
 3   !                                                                          W
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-[RIDDLES]
-78 20 2
-78 12 3
+

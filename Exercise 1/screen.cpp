@@ -163,6 +163,7 @@ void screen::initScreenData(int id) {
     if (!fileName.empty()) {
         loadFromFile(fileName);
     }
+    findLegendPosition();
     
     // Collect initial positions of all keys on this screen
     // This logic relies on 'mapData' being populated
