@@ -56,19 +56,22 @@ void screen::initScreenData(int id) {
     clearDarkMask();
     torchLit = false;
     currentScreenID = id;
+    resetArmedBombs();
+    valid = true;
+    loadError.clear();
 
     // Setup for screen 0
     if (currentScreenID == 0) {
         char Screen1[MAX_Y][MAX_X + 1] = {
             //01234567890123456789012345678901234567890123456789012345678901234567890123456789
              "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
-             "W              Player1:                W                Player2:               W", // 1
-             "W Inventory:                           W Inventory:                            W", // 2
-             "W Current Room:                        W Current Room:                         W", // 3
-             "W                                      W                                       W", // 4
-             "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 5
+             "WL                                                                             W", // 1
+             "W                                                                              W", // 2
+             "W                                                                              W", // 3
+             "W                                                                              W", // 4
+             "W                                                                              W", // 5
              "W                 W                W                W          W               W", // 6
-             "W  WWWWWWWWWWWWW  W                W                W K W      WWWWWWWWWWWW    W", // 7
+             "W                 W                W                W K W      WWWWWWWWWWWW    W", // 7
              "WK             W  W                W                WWWWW      WW         W    W", // 8
              "WWWWWWWWWWWWWWWW  W                W                           WW   WWWW  W    W", // 9
              "W                                  W                           WW   W  W  W    W", // 10
@@ -81,10 +84,10 @@ void screen::initScreenData(int id) {
              "W        W                   WWW?WWW                                           W", // 17
              "W        W                   W     W                                           W", // 18
              "W        1                   W  K  W                                           W", // 19
-             "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW  W", // 20
-             "W            W                             W                                   W", // 21
-             "W            W             W               W                                   W", // 22
-             "W            ?             W                              !                    W", // 23
+             "Wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww  W", // 20
+             "W            W                   @          W           @                      W", // 21
+             "W    @       W       ^       W              W                                  W", // 22
+             "W            ?              W                              !      @            W", // 23
              "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"  // 24
         };
 
@@ -102,7 +105,8 @@ void screen::initScreenData(int id) {
         for (int i = 0; i < MAX_Y; ++i) {
             strcpy_s(mapData[i], MAX_X + 1, Screen1[i]);
         }
-
+		// Find legend position if exists
+        findLegendPosition();
         // Register switches for this screen
         registerSwitch(0, Point(5, 10, 0, 0, '/'), SwitchState::OFF);
         registerSwitch(1, Point(20, 10, 0, 0, '/'), SwitchState::OFF);
@@ -125,11 +129,11 @@ void screen::initScreenData(int id) {
         std::vector<Point> keyPositions3 = { Point(47, 13, 0, 0, 'K'), Point(54, 7, 0, 0, 'K') };
 
         // Create doors for this screen
-        doors.emplace_back(1, 0, Point(9, 19, 0, 0, ' '), false, false,
+        doors.emplace_back(1, 0, Point(9, 19, 0, 0, ' '),
             keyPositions1, 1, nullptr, 0);
-        doors.emplace_back(2, 0, Point(35, 11, 0, 0, ' '), false, false,
+        doors.emplace_back(2, 0, Point(35, 11, 0, 0, ' '), 
             keyPositions2, 2, nullptr, 0);
-        doors.emplace_back(3, 1, Point(1, 23, 0, 0, ' '), false, false,
+        doors.emplace_back(3, 1, Point(1, 23, 0, 0, ' '), 
             keyPositions3, 2,
             doorSwitchReq, doorSwitchReqCount);
 
@@ -141,10 +145,10 @@ void screen::initScreenData(int id) {
         char Screen2[MAX_Y][MAX_X + 1] = {
             //01234567890123456789012345678901234567890123456789012345678901234567890123456789
              "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
-             "W              Player1:                W                Player2:               W", // 1
-             "W Inventory:                           W Inventory:                            W", // 2
-             "W Current Room:                        W Current Room:                         W", // 3
-             "W                                      W                                       W", // 4
+             "WL                                                                             W", // 1
+             "W                                                                              W", // 2
+             "W                                                                              W", // 3
+             "W                                                                              W", // 4
              "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 5
              "W                                                                              W", // 6
              "W                                                                              5", // 7
@@ -160,7 +164,7 @@ void screen::initScreenData(int id) {
              "W                               W                  W                           W", // 17
              "W             W                 W                               W              W", // 18
              "W             W                                    W            W              W", // 19
-             "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW?W", // 20
+             "Wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww?W", // 20
              "W                                             W                                W", // 21
              "W                                             WWWW                             W", // 22
              "3   !                                                                          W", // 23
@@ -181,7 +185,8 @@ void screen::initScreenData(int id) {
         for (int i = 0; i < MAX_Y; ++i) {
             strcpy_s(mapData[i], MAX_X + 1, Screen2[i]);
         }
-
+        // Find legend position if exists
+        findLegendPosition();
         // Register switches for this screen
         registerSwitch(2, Point(48, 21, 0, 0, '/'), SwitchState::OFF);
         registerSwitch(3, Point(52, 15, 0, 0, '/'), SwitchState::OFF);
@@ -203,11 +208,11 @@ void screen::initScreenData(int id) {
         std::vector<Point> keyPositions5 = { Point(33, 9, 0, 0, 'K') };
 
         // Create doors for this screen
-        doors.emplace_back(3, 0, Point(78, 14, 0, 0, ' '), false, false,
+        doors.emplace_back(3, 0, Point(78, 14, 0, 0, ' '), 
             std::vector<Point>{}, 0, nullptr, 0);
-        doors.emplace_back(4, 1, Point(1, 8, 0, 0, ' '), false, false,
+        doors.emplace_back(4, 1, Point(1, 8, 0, 0, ' '), 
             keyPositions4, 1, nullptr, 0);
-        doors.emplace_back(5, 2, Point(1, 23, 0, 0, ' '), false, false,
+        doors.emplace_back(5, 2, Point(1, 23, 0, 0, ' '), 
             keyPositions5, 1,
             doorSwitchReq, doorSwitchReqCount);
 
@@ -330,6 +335,77 @@ void screen::setTorchLit(bool lit) {
     torchLit = lit;
 }
 
+void screen::resetArmedBombs() {
+    for (int y = 0; y < MAX_Y; ++y) {
+        for (int x = 0; x < MAX_X; ++x) {
+            bombIsArmed[y][x] = false;
+        }
+    }
+}
 
+void screen::markBombAsArmedAt(const Point& p, bool isArmed) {
+    const int x = p.getX();
+    const int y = p.getY();
+    if (x < 0 || x >= MAX_X || y < 0 || y >= MAX_Y) {
+        return;
+    }
+    bombIsArmed[y][x] = isArmed;
+}
+
+bool screen::isBombArmedAt(const Point& p) const {
+    const int x = p.getX();
+    const int y = p.getY();
+    if (x < 0 || x >= MAX_X || y < 0 || y >= MAX_Y) {
+        return false;
+    }
+    return bombIsArmed[y][x];
+}
+
+bool screen::findLegendPosition() {
+    hasLegend = false;
+    legendX = 0;
+    legendY = -1;
+    const int LEGEND_HEIGHT = 5;
+    int foundCount = 0;
+    int foundY = -1;
+
+    for (int y = 0; y < MAX_Y; ++y) {
+        for (int x = 0; x < MAX_X; ++x) {
+            if (mapData[y][x] == 'L') {
+                ++foundCount;
+
+                if (foundCount == 1) {
+                    foundY = y;
+                }
+                mapData[y][x] = ' ';
+            }
+        }
+    }
+    if (foundCount == 0) {
+        return false; 
+    }
+    if (foundCount > 1) {
+        valid = false;
+        loadError = "Invalid screen: multiple 'L' legend markers were found.";
+        return false;
+    }
+    if (foundY < 0 || foundY + (LEGEND_HEIGHT - 1) >= MAX_Y) {
+        valid = false;
+        loadError = "Invalid legend position: 'L' at Y=" + std::to_string(foundY) +
+            " but legend height is 3 and screen height is " + std::to_string(MAX_Y) + ".";
+        return false;
+    } 
+    legendY = foundY;
+    legendX = 0;
+    hasLegend = true;
+    return true;
+}
+
+bool screen::isInLegendArea(int x, int y) const {
+    if (!hasLegend) return false;
+    if (x < 0 || x >= MAX_X) return false;
+    if (y < 0 || y >= MAX_Y) return false;
+    return (y >= legendY && y < legendY + LEGEND_TOTAL_H);
+}
 
 

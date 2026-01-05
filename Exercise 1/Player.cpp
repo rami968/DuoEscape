@@ -9,17 +9,14 @@ Player::Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& scre
 	std::memcpy(the_keys, keys, NUM_KEYS * sizeof(the_keys[0]));
 }
 
-void Player::handleKeyPressed(char key_pressed) {
-	// Do not accept input while waiting for screen transition
+void Player::handleKeyPressed(char key_pressed) {  // Handle key press for movement and disposal
 	if (awaitingScreenTransition) {
 		return;
 	}
 	char lk = std::tolower(key_pressed);
-
-	// Last key in the array is the "dispose element" key
 	char disposeKey = the_keys[NUM_KEYS - 1];
 	if (lk == disposeKey) {
-		disposeElement();
+		disposeElement(); // Handle element disposal
 		return;
 	}
 
@@ -28,19 +25,18 @@ void Player::handleKeyPressed(char key_pressed) {
 		if (k == lk) {
 			Direction dir = static_cast<Direction>(index);
 			p.setDirection(dir);
-
-			// Track the last movement direction (for drop logic when STAY)
 			if (dir != Direction::STAY) {
-				lastMoveDir = dir;
+				lastMoveDir = dir; // Remember last moving direction
 			}
 			return;
+
 		}
 	}
 }
 
-void Player::consumeHeldKey() {
+void Player::consumeHeldKey() {  // Remove held key from inventory
 	if (heldElement == 'K') {
-		removeKeyFromInventory(keyFirstPos);
+		removeKeyFromInventory(keyFirstPos); // Remove key from collected keys vector
 		heldElement = ' ';
 	}
 }
@@ -53,144 +49,134 @@ void Player::draw() {
 }
 
 void Player::move() {
-	// Block movement during screen transition
 	if (awaitingScreenTransition) {
 		return;
 	}
-
-	// Movement rate control (cooldown between moves)
-	if (ticksUntilNextMove > 0) {
+	// movement timing
+	if (ticksUntilNextMove > 0) { // Check if movement interval has passed
 		--ticksUntilNextMove;
 		return;
 	}
+
 	ticksUntilNextMove = MOVE_TICK_INTERVAL;
 
 	char backgroundChar = theScreen->getCharAt(p);
-	p.draw(backgroundChar);
-
-	// Save original position to revert illegal moves
+	p.draw(backgroundChar); // Redraw background at current position
 	Point p_orig = p;
-	p.move();
-
+	p.move(); // Calculate new position
 	if (theScreen->isWall(p)) {
-		p = p_orig;
+		p = p_orig; // Collision: revert position
 	}
 	else if (theScreen->isDoor(p)) {
-		// handleDoor encapsulates all door/key/teleport logic
-		if (handleDoor(p_orig)) {
-			return;
-		}
+		char targetChar = theScreen->getCharAt(p);
+		Doors* currentDoor = theScreen->getDoorByChar(targetChar);
+		handleDoorInteraction(p_orig, targetChar, currentDoor); // Handle door logic (pass/deposit/block)
+	}
+	else if (theScreen->getCharAt(p) == '@' && theScreen->isBombArmedAt(p)) {
+		p = p_orig;  // active bomb on the ground(counting down to explode) – block stepping onto this tile
 	}
 	else if (theScreen->isSwitchOff(p) || theScreen->isSwitchOn(p)) {
 		bool steppedOntoSwitch = (p.getX() != p_orig.getX()) || (p.getY() != p_orig.getY());
 		if (steppedOntoSwitch) {
-			theScreen->toggleSwitchAt(p);
+			theScreen->toggleSwitchAt(p); // Toggle switch state
 		}
 	}
-	else if (theScreen->isKey(p) || theScreen->isTorch(p)) {
+	else if (theScreen->isKey(p) || theScreen->isTorch(p) || theScreen->isBomb(p)) {
 		char elemChar = theScreen->getCharAt(p);
-
-		// Player can hold only one element at a time
 		if (hasElement()) {
-			p = p_orig;
+			p = p_orig; // Cannot pick up if inventory is full
 			p.draw();
 			return;
 		}
-
-		pickUpElement(elemChar, p);
-		theScreen->setCharAt(p, ' ');
+		pickUpElement(elemChar, p); // Update inventory
+		theScreen->setCharAt(p, ' '); // Remove element from map
 		theScreen->draw();
 		p.draw();
 	}
 	else if (theScreen->isRiddle(p)) {
 		Riddle* currentRiddle = theScreen->getRiddleByPosition(p);
-
-		// Player does not stand on the riddle tile, only triggers it
-		p = p_orig;
+		p = p_orig; // Stop on riddle, movement handled by control unit
 		if (currentRiddle) {
-			setActiveRiddle(currentRiddle);
+			setActiveRiddle(currentRiddle); // Signal riddle solving sequence
 		}
 	}
-
 	if (!awaitingScreenTransition) {
-		p.draw();
-	}
-}
-
-bool Player::handleDoor(const Point& p_orig) {
-	char targetChar = theScreen->getCharAt(p);
-	Doors* currentDoor = theScreen->getDoorByChar(targetChar);
-	if (currentDoor != nullptr) {
-		const SwitchBoard& switchBoard = theScreen->getSwitchBoard();
-
-		// Deposit key into door if needed (without passing through)
-		if (hasElement() && getHeldElement() == 'K' && currentDoor->getRequiredKeyCount() > 0) {
-			if (currentDoor->depositKey(keyFirstPos)) {
-				consumeHeldKey();
-				keyFirstPos = Point(-1, -1, 0, 0, ' ');
-			}
-			p = p_orig;
-			return true;
-		}
-
-		// Door cannot be passed yet (switches / keys not satisfied)
-		if (!currentDoor->canPlayerPass(switchBoard)) {
-			p = p_orig;
-			return false;
-		}
-
-		// Teleport player through the door
-		currentDoor->openDoor();
-		char playerChar = p.getChar();
-		p = currentDoor->getDestinationPosition();
-		p.setChar(playerChar);
-		p.setDirection(Direction::STAY);
-
-		// Mark that a screen transition should occur
-		currDoor = currentDoor;
-		awaitingScreenTransition = true;
-		ticksUntilNextMove = 0;
-		return true;
-	}
-	else {
-		// No matching door found for this char – revert
-		p = p_orig;
-		return false;
+		p.draw(); // Draw player at final position
 	}
 }
 
 void Player::setPosition(const Point& newPos) {
 	char currentCh = p.getChar();
 	p = newPos;
-	p.setChar(currentCh);
+	p.setChar(currentCh); // keep the player's glyph when teleporting
 }
 
 char Player::getHeldElement() const { return heldElement; }
 bool Player::hasElement() const { return heldElement != ' '; }
 bool Player::hasTorch() const { return heldElement == '!'; }
-
 void Player::pickUpElement(char element, const Point& pos)
 {
 	heldElement = element;
 	heldElementPos = pos;
-
-	// Keys are tracked by their original map position (for doors)
 	if (element == 'K') {
-		const Point* originalID = theScreen->findOriginalKeyID(pos);
+		const Point* originalID = theScreen->findOriginalKeyID(pos); // Find the original key ID
 
 		if (originalID) {
 			keyFirstPos = *originalID;
 
 			if (!hasKeyInInventory(*originalID)) {
-				collectedKeys.push_back(*originalID);
+				collectedKeys.push_back(*originalID); // Store unique key ID
 			}
+
 		}
+	}
+}
+
+void Player::handleDoorInteraction(const Point& p_orig, char targetChar, Doors* currentDoor) {
+	if (currentDoor != nullptr) {
+		const SwitchBoard& switchBoard = theScreen->getSwitchBoard();
+		// Attempt to deposit key into door
+		if (hasElement() && getHeldElement() == 'K' && currentDoor->getRequiredKeyCount() > 0) {
+			if (currentDoor->depositKey(keyFirstPos)) {
+				consumeHeldKey(); // remove key from player's inventory and state
+				keyFirstPos = Point(-1, -1, 0, 0, ' ');
+			}
+			p = p_orig;
+			return;
+		}
+
+		// Check if door can be passed
+		if (!currentDoor->canPlayerPass(switchBoard)) {
+			p = p_orig; // Door is locked or requirements not met
+		}
+		else {
+			// Handle screen transition logic
+			char playerChar = p.getChar();
+			if (currentDoor->getDestinationScreenID() != theScreen->getCurrentScreenID()) {
+				currDoor = currentDoor;
+				awaitingScreenTransition = true; // Signal the GameManager to change screens
+			}
+			else {
+				// Internal door movement on the same screen (teleport)
+				p.draw(theScreen->getCharAt(p));
+				p = currentDoor->getDestinationPosition();
+				theScreen->setCharAt(p, ' ');
+				p.setChar(playerChar);
+				p.setDirection(Direction::STAY);
+				p.draw();
+			}
+			ticksUntilNextMove = 0;
+			return;
+		}
+	}
+	else {
+		p = p_orig; // Invalid door character
 	}
 }
 
 Point Player::getHeldElementPos() const {
 	if (heldElement == 'K') {
-		return keyFirstPos;
+		return keyFirstPos; // Return original key ID for key (stored in keyFirstPos)
 	}
 	return heldElementPos;
 }
@@ -201,40 +187,39 @@ void Player::resetTransitionSignal() {
 	ticksUntilNextMove = 0;
 }
 
+
 void Player::disposeElement() {
 	if (heldElement == ' ')
 		return;
-
-	// Base direction on current facing; fall back to lastMoveDir or RIGHT
 	Direction dir = p.getDirection();
+
 	if (dir == Direction::STAY) {
 		if (lastMoveDir != Direction::STAY) {
 			dir = lastMoveDir;
 		}
 		else {
-			dir = Direction::RIGHT;
+			dir = Direction::RIGHT; // Default direction for disposal
 		}
 	}
 
-	// Compute drop position one step ahead
 	Point elementDropPos = p;
 	elementDropPos.setDirection(dir);
-	elementDropPos.move();
+	elementDropPos.move(); // Calculate drop location
 
-	// Block dropping on non-empty or special tiles
+
 	if (theScreen->isWall(elementDropPos) ||
 		theScreen->isDoor(elementDropPos) ||
 		theScreen->isSwitchOff(elementDropPos) ||
 		theScreen->isSwitchOn(elementDropPos) ||
 		theScreen->isRiddle(elementDropPos) ||
 		theScreen->isTorch(elementDropPos) ||
+		theScreen->isBomb(elementDropPos) ||
 		theScreen->getCharAt(elementDropPos) != ' ') {
-		return;
+		return; // Cannot drop element here
 	}
 
-	// Removing key from inventory if we drop it
 	if (heldElement == 'K') {
-		removeKeyFromInventory(heldElementPos);
+		removeKeyFromInventory(heldElementPos); // Remove key from collected keys
 	}
 
 	if (heldElement == '@') {
@@ -249,7 +234,7 @@ void Player::disposeElement() {
 		return;
 	}
 
-	theScreen->setCharAt(elementDropPos, heldElement);
+	theScreen->setCharAt(elementDropPos, heldElement); // Place element on map
 	heldElement = ' ';
 	p.setDirection(Direction::STAY);
 	lastMoveDir = Direction::STAY;
@@ -257,28 +242,31 @@ void Player::disposeElement() {
 	p.draw();
 }
 
+// Check if a key position is already in collectedKeys
 bool Player::hasKeyInInventory(const Point& keyPos) const {
-	for (const auto& storedKey : collectedKeys) {
-		if (storedKey.getX() == keyPos.getX() && storedKey.getY() == keyPos.getY()) {
-			return true;
-		}
-	}
-	return false;
+    for (const auto& storedKey : collectedKeys) {
+        if (storedKey.getX() == keyPos.getX() && storedKey.getY() == keyPos.getY()) {
+            return true;
+        }
+    }
+    return false;
 }
 
-bool Player::removeKeyFromInventory(const Point& keyPos) {
+bool Player::removeKeyFromInventory(const Point& keyPos) { // Removes key from collected keys vector
 	for (auto it = collectedKeys.begin(); it != collectedKeys.end(); ++it) {
 		if (it->getX() == keyPos.getX() && it->getY() == keyPos.getY()) {
 			collectedKeys.erase(it);
 			return true;
 		}
 	}
-	return false;
+	return false; // Key not found
 }
 
+
+// Try to pop a bomb request (set by disposing a bomb) and return its position
 bool Player::tryPopBombRequest(Point& out) {
-	if (!bombRequested) return false;
-	out = bombRequestPos;
-	bombRequested = false;
-	return true;
+    if (!bombRequested) return false;
+    out = bombRequestPos;
+    bombRequested = false;
+    return true;
 }

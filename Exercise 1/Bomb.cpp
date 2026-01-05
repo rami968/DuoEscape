@@ -1,8 +1,6 @@
 #include "Bomb.h"
 
-Bomb::Bomb(const Point& position, int countdown)
-    : pos(position), ticksRemaining(countdown) {
-}
+Bomb::Bomb(const Point& position, int countdown, int bOwner) : pos(position), ticksRemaining(countdown), bombOwner(bOwner){}
 
 void Bomb::tick() {
     if (ticksRemaining > 0) {
@@ -14,6 +12,5 @@ bool Bomb::isReadyToExplode() const {
     return ticksRemaining <= 0;
 }
 
-const Point& Bomb::getPosition() const {
-    return pos;
-}
+
+

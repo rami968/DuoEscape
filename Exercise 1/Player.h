@@ -11,11 +11,10 @@
 
 class Player {
 	static constexpr int NUM_KEYS = 6;
-	static constexpr int MOVE_TICK_INTERVAL = 1; 
 	char the_keys[NUM_KEYS];
 	Point p;
 	Doors* currDoor = nullptr;
-	bool awaitingScreenTransition = false; 
+	bool awaitingScreenTransition = false;
 	screen* theScreen;
 	Point heldElementPos;
 	Point keyFirstPos = Point(-1, -1, 0, 0, ' ');
@@ -26,12 +25,12 @@ class Player {
 	Direction lastMoveDir = Direction::STAY;
 	bool hasKeyInInventory(const Point& keyPos) const;
 	bool removeKeyFromInventory(const Point& keyPos);
-	bool handleDoor(const Point& originalPos);
 	bool bombRequested = false;
 	Point bombRequestPos = Point(-1, -1, 0, 0, ' ');
-
+	int lives = 3;
 
 public:
+	static constexpr int MOVE_TICK_INTERVAL = 1;
 	Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen);
 	void disposeElement();
 	void handleKeyPressed(char key_pressed);
@@ -58,5 +57,13 @@ public:
 	void setDirection(Direction dir) {
 		p.setDirection(dir);
 	}
+	void handleDoorInteraction(const Point& p_orig, char targetChar, Doors* currentDoor);
+	void resetHeldElement() {
+		heldElement = ' ';
+	}
 	bool tryPopBombRequest(Point& out);
+	int getLives() const { return lives; }
+	void loseLife(int amount = 1) { lives = (lives > amount ? lives - amount : 0); }
+	bool isDead() const { return lives == 0; }
+	void resetLives(int v = 3) { lives = v; }
 };

@@ -26,6 +26,8 @@ private:
     size_t requiredSwitchCount = 0;
     int destinationScreenID;
     Point destinationPosition;
+    static constexpr int EXTERNAL_DOOR_ID_1 = 3;
+    static constexpr int EXTERNAL_DOOR_ID_2 = 5;
 
 public:
     Doors(int id, int destID, const Point& destPos,
@@ -40,4 +42,8 @@ public:
     char getDisplayChar() const { return (char)('0' + doorID); }
     size_t getRequiredKeyCount() const { return requiredKeyCount; }
     size_t getRequiredSwitchCount() const { return requiredSwitchCount; }
+    int getDoorId() const { return doorID; }
+    bool isExternalDoor() const {
+        return doorID == EXTERNAL_DOOR_ID_1 || doorID == EXTERNAL_DOOR_ID_2;
+    }
 };

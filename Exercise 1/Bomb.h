@@ -2,21 +2,15 @@
 #include "Point.h"
 
 class Bomb {
-public:
-    // יוצרת פצצה במיקום position עם טיימר countdown
-    Bomb(const Point& position, int countdown);
-
-    // מורידה 1 מהטיימר (כל "טיק" במשחק)
-    void tick();
-
-    // האם הגיע הזמן להתפוצץ?
-    bool isReadyToExplode() const;
-
-    // המיקום של הפצצה
-    const Point& getPosition() const;
-
 private:
-    Point pos;           // איפה הפצצה נמצאת על המפה
-    int ticksRemaining;  // כמה טיקים נשארו עד פיצוץ
+    Point pos;
+    int ticksRemaining;
+    int bombOwner;
+public:
+    Bomb(const Point& position, int countdown, int bOwner);
+    void tick();
+    bool isReadyToExplode() const;
+    const Point& getPosition() const {return pos;}
+    int getTicksRemaining() const { return ticksRemaining; }
+    int getBombOwner() const { return bombOwner; }
 };
-#pragma once

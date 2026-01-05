@@ -6,6 +6,7 @@
 #include "SwitchBoard.h"
 #include "Riddle.h"
 #include <vector>
+#include <string>
 
 using std::cout, std::endl;
 
@@ -24,6 +25,13 @@ private:
 	bool darkMask[MAX_Y][MAX_X] = { false };
 	void clearDarkMask();
 	static char switchStateToChar(SwitchState state);
+	bool bombIsArmed[MAX_Y][MAX_X]{};
+	int legendX = 1;
+	int legendY = -1;
+	bool hasLegend = false;
+	bool valid = true;
+	std::string loadError;
+
 
 public:
 
@@ -45,7 +53,7 @@ public:
 	void draw() const;
 	bool isWall(const Point& p) const {
 		char ch = getCharAt(p);
-		return (ch == 'W');
+		return (ch == 'W' || ch == 'w');
 	}
 	bool isDoor(const Point& p) const {
 		return isdigit(getCharAt(p));
@@ -65,10 +73,24 @@ public:
 	bool isRiddle(const Point& p) const {
 		return getCharAt(p) == '?';
 	}
+	bool isBomb(const Point& p) const {
+		return getCharAt(p) == '@' && !isBombArmedAt(p);
+	}
 	void setCharAt(const Point& pos, char ch);
 	void markDarkArea(int x1, int y1, int x2, int y2);
 	void setTorchLit(bool lit);
 	bool isTorchLit() const { return torchLit; }
 	const Point* findOriginalKeyID(const Point& keyID) const;
 	int getCurrentScreenID() const { return currentScreenID; }
+	void resetArmedBombs();
+	void markBombAsArmedAt(const Point& p, bool isArmed);
+	bool isBombArmedAt(const Point& p) const;
+	bool findLegendPosition();  
+	bool hasLegendArea() const { return hasLegend; }
+	int getLegendX() const { return legendX; }
+	int getLegendY() const { return legendY; }
+	bool isValid() const { return valid; }
+	const std::string& getLoadError() const { return loadError; }
+	bool isInLegendArea(int x, int y) const;
+	static constexpr int LEGEND_TOTAL_H = 5;
 };
