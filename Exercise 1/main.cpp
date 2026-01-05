@@ -2,6 +2,6 @@
 
 int main() {
 	GameManager Game;
-	Game.showMenuAndHandleInput(); // Start the game menu and handle user input
+	Game.start();
 	return 0;
 }

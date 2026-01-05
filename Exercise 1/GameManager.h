@@ -19,8 +19,11 @@ private:
     Doors* p1_exit_door = nullptr;
     Doors* p2_exit_door = nullptr;
 	bool isFinalScreen = false;
+
 public:
     GameManager();
+	bool init(std::vector<std::string>& errors);
+	void start();
     void resetGameState();
     void run();
     void showMenuAndHandleInput();
@@ -40,5 +43,11 @@ public:
     void checkAndHandleTorchUpdate(Player& p1, Player& p2, bool& lastTorchState);
     bool handleScreenTransition(Player& p1, Player& p2, bool& lastTorchState);
 	bool handlePauseInput();
+	bool isOtherPlayerAt(const Point& pos, Player* callingPlayer);
+	void transferLaunch(Player* jumpingPlayer, const Point& impactPos);
+	bool canObstacleMove(Obstacle* obs, Direction dir, Player* pushingPlayer);
+	int calculateCombinedForce(Obstacle* obs, Direction pushDir);
+	bool isPlayerPushingObstacle(Player* player, Obstacle* obs, Direction pushDir);
 };
+
 

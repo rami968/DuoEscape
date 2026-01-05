@@ -9,17 +9,87 @@
 #include "Point.h"
 #include "screen.h"
 #include "utils.h"
+#include <filesystem>
+#include <string>
+#include <vector>
+
+namespace fs = std::filesystem;
 
 enum Keys { ESC = 27 };
 
 GameManager::GameManager() :  
-	screens{ screen(0), screen(1), screen(2) }, // Initialize all screens once
-	player1(Point(1, 19, 0, 0, '$'), "wdxase", screens[0]),  // Initialize players on the first screen
-	player2(Point(1, 23, 0, 0, '&'), "ilmjko", screens[0])
+	// Initialize players with nullptr screen initially
+	player1(Point(1, 19, 0, 0, '$'), "wdxase", nullptr, this),  
+	player2(Point(1, 23, 0, 0, '&'), "ilmjko", nullptr, this)
 {
 	currentScreenID = 0;
 }
 
+bool GameManager::init(std::vector<std::string>& errors) {
+	// 1. Load Riddles
+	if (!screen::loadRiddlesFromFile("riddles.txt", errors)) {
+		return false; // Critical failure
+	}
+
+	// 2. Find all screen files
+    std::vector<std::string> screenFiles;
+    for (const auto& entry : fs::directory_iterator(".")) {
+        if (entry.is_regular_file()) {
+            std::string filename = entry.path().filename().string();
+            if (filename.rfind("adv-world", 0) == 0 && filename.find(".screen") != std::string::npos) {
+                screenFiles.push_back(filename);
+            }
+        }
+    }
+    std::sort(screenFiles.begin(), screenFiles.end());
+
+	if (screenFiles.empty()) {
+		errors.push_back("Critical Error: No 'adv-world*.screen' files found in working directory.");
+		return false;
+	}
+
+    // 3. Initialize screens
+    for (int i = 0; i < screenFiles.size(); ++i) {
+        screens.emplace_back(i, screenFiles[i]);
+		// Collect errors from this screen load
+		const auto& screenErrors = screens.back().getErrors();
+		errors.insert(errors.end(), screenErrors.begin(), screenErrors.end());
+    }
+    
+    // 4. Set players to first screen if available
+    if (!screens.empty()) {
+        player1.setScreen(&screens[0]);
+        player2.setScreen(&screens[0]);
+    }
+    
+	currentScreenID = 0;
+	return true;
+}
+
+void GameManager::start() {
+	std::vector<std::string> errors;
+	if (!init(errors)) {
+		std::cerr << "Initialization failed:" << std::endl;
+		for (const auto& err : errors) {
+			std::cerr << err << std::endl;
+		}
+		std::cout << "Press any key to exit..." << std::endl;
+		std::cin.get();
+		return;
+	}
+
+	// Print non-critical warnings
+	if (!errors.empty()) {
+		std::cerr << "Warnings:" << std::endl;
+		for (const auto& err : errors) {
+			std::cerr << err << std::endl;
+		}
+		std::cout << "Press Enter to continue..." << std::endl;
+		std::cin.get();
+	}
+
+	showMenuAndHandleInput();
+}
 
 void GameManager::changeScreen(int newScreenID, const Point& destinationPos, Player& p1, Player& p2) { // Change active screen and update player positions
 	if (newScreenID >= 0 && newScreenID < screens.size()) {
@@ -41,6 +111,7 @@ void GameManager::changeScreen(int newScreenID, const Point& destinationPos, Pla
 		currentScreen.setTorchLit(p1.hasTorch() || p2.hasTorch()); // Update lighting based on held elements
 		p1.setPosition(destinationPos);
 		p2.setPosition(destinationPos);
+
 		currentScreen.draw();
 		p1.draw();
 		p2.draw();
@@ -298,6 +369,83 @@ bool GameManager::handlePauseInput() {
 	return true;
 }
 
+bool GameManager::isOtherPlayerAt(const Point& pos, Player* callingPlayer) {
+	Player* other = (callingPlayer == &player1) ? &player2 : &player1;
+	return (other->getPosition().getX() == pos.getX() && other->getPosition().getY() == pos.getY());
+}
+
+void GameManager::transferLaunch(Player* jumpingPlayer, const Point& impactPos) {
+	Player* targetPlayer = (jumpingPlayer == &player1) ? &player2 : &player1;
+	targetPlayer->receiveLaunch(
+		jumpingPlayer->getActiveSpringDir(),
+		jumpingPlayer->getSpringSpeed(),
+		jumpingPlayer->getSpringTimer(),
+		jumpingPlayer->getDirection()
+	);
+}
+
+bool GameManager::canObstacleMove(Obstacle* obs, Direction dir, Player* pushingPlayer) {
+	int currentForce = calculateCombinedForce(obs, dir);
+	int totalWeight = obs->getRequiredForce();
+
+	std::vector<Obstacle*> chain;
+	chain.push_back(obs);
+
+	for (size_t i = 0; i < chain.size(); ++i) {
+		Obstacle* current = chain[i];
+		for (const auto& part : current->getPositions()) {
+			Point nextPos = part.calculateNext(dir);
+			if (current->containsPoint(nextPos)) continue;
+
+			if (getCurrentScreen().isObstacle(nextPos)) {
+				Obstacle* nextObs = getCurrentScreen().getObstacleByPosition(nextPos);
+				if (nextObs && std::find(chain.begin(), chain.end(), nextObs) == chain.end()) {
+					chain.push_back(nextObs);
+					totalWeight += nextObs->getRequiredForce();
+				}
+			}
+		}
+	}
+	if (currentForce < totalWeight) return false;
+	Player* other = (pushingPlayer == &player1) ? &player2 : &player1;
+
+	for (Obstacle* o : chain) {
+		if (!o->handleInteractionsWithObstacle(dir, true)) return false;
+		for (const auto& part : o->getPositions()) {
+			if (part.calculateNext(dir) == other->getPosition()) {
+				if (!isPlayerPushingObstacle(other, o, dir)) {
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+}
+
+int GameManager::calculateCombinedForce(Obstacle* obs, Direction pushDir) {
+	int totalForce = 0;
+
+	if (isPlayerPushingObstacle(&player1, obs, pushDir)) {
+		totalForce += player1.getForce();
+	}
+	if (isPlayerPushingObstacle(&player2, obs, pushDir)) {
+		totalForce += player2.getForce();
+	}
+
+	return totalForce;
+}
+
+bool GameManager::isPlayerPushingObstacle(Player* player, Obstacle* obs, Direction pushDir) {
+	if (player->getDirection() != pushDir || pushDir == Direction::STAY) {
+		return false;
+	}
+
+	Point currentPos = player->getPosition();
+	Point nextPos = currentPos.calculateNext(pushDir);
+
+	return obs->containsPoint(currentPos) || obs->containsPoint(nextPos);
+}
+
 
 void GameManager::run() {
 	// Main game loop
@@ -344,6 +492,15 @@ void GameManager::run() {
 				if (!handlePauseInput()) {
 					break; // Break the while loop to end run()
 				}
+			}
+			else if (key == 'r' || key == 'R') {
+				resetGameState();
+				// Redraw after reset
+				screens[currentScreenID].draw();
+				player1.draw();
+				player2.draw();
+				displayingPlayerStatus(player1, player2, screens[currentScreenID]);
+				lastTorchState = player1.hasTorch() || player2.hasTorch(); 
 			}
 			else {
 				// Handle movement/dispose key presses

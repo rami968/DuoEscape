@@ -2,6 +2,9 @@
 #include "Doors.h"
 #include "point.h"
 #include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 // Converts a switch state to the character shown on the map
 char screen::switchStateToChar(SwitchState state) {
@@ -49,6 +52,101 @@ const Point* screen::findOriginalKeyID(const Point& keyID) const {
     return nullptr;
 }
 
+// Initialize static member
+std::map<int, Riddle> screen::globalRiddles;
+
+bool screen::loadRiddlesFromFile(const std::string& filename, std::vector<std::string>& outErrors) {
+	std::ifstream file(filename);
+	if (!file.is_open()) {
+		outErrors.push_back("Error: Could not open riddle file: " + filename);
+		return false;
+	}
+	std::string line;
+	int lineNum = 0;
+	while (std::getline(file, line)) {
+		lineNum++;
+		if (line.empty()) continue;
+		std::stringstream ss(line);
+		std::string segment;
+		std::vector<std::string> parts;
+		
+		// Split by '|'
+		while (std::getline(ss, segment, '|')) {
+			parts.push_back(segment);
+		}
+
+		if (parts.size() >= 3) {
+			try {
+				int id = std::stoi(parts[0]);
+				std::string question = parts[1];
+				std::vector<std::string> answers;
+				for (size_t i = 2; i < parts.size(); ++i) {
+					answers.push_back(parts[i]);
+				}
+				// Store in cache with placeholder position
+				globalRiddles.emplace(id, Riddle(id, Point(0, 0, 0, 0, '?'), question, answers));
+			} catch (...) {
+				outErrors.push_back("Warning: Invalid riddle format at line " + std::to_string(lineNum) + " in " + filename);
+			}
+		} else {
+             outErrors.push_back("Warning: Insufficient riddle data (needs ID|Question|Answer) at line " + std::to_string(lineNum) + " in " + filename);
+        }
+	}
+	return true;
+}
+
+void screen::loadFromFile(const std::string& filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        errors.push_back("Critical Error: Could not open map file: " + filename);
+        // Fill safe default map
+        for (int y = 0; y < MAX_Y; ++y) {
+             for (int x = 0; x < MAX_X; ++x) mapData[y][x] = ' ';
+             mapData[y][MAX_X] = '\0';
+        }
+        return;
+    }
+
+    // Read map data (first 25 lines)
+    std::string line;
+    for (int y = 0; y < MAX_Y; ++y) {
+        if (std::getline(file, line)) {
+             size_t len = std::min(line.length(), (size_t)MAX_X);
+             std::copy(line.begin(), line.begin() + len, mapData[y]);
+             for (size_t i = len; i < MAX_X; ++i) {
+                 mapData[y][i] = ' ';
+             }
+             mapData[y][MAX_X] = '\0';
+        } else {
+             for (int i = 0; i < MAX_X; ++i) mapData[y][i] = ' ';
+             mapData[y][MAX_X] = '\0';
+             // Not necessarily an error, maybe short file, but let's warn if it looks very short?
+             // Actually many text editors might not add 25 lines. Defaulting to space is fine "overcoming problem".
+        }
+    }
+
+    // Read optional sections
+    riddles.clear();
+    while (std::getline(file, line)) {
+        if (line == "[RIDDLES]") {
+            while (std::getline(file, line) && !line.empty()) {
+                // Parse: X Y ID
+                std::stringstream ss(line);
+                int x, y, id;
+                if (ss >> x >> y >> id) {
+					// Instantiate riddle from cache if exists
+					auto it = globalRiddles.find(id);
+					if (it != globalRiddles.end()) {
+						riddles.push_back(Riddle(id, Point(x, y, 0, 0, '?'), it->second.getQuestion(), it->second.getCorrectAnswers()));
+					} else {
+                        errors.push_back("Warning: Map " + filename + " references unknown Riddle ID: " + std::to_string(id));
+                    }
+                }
+            }
+        }
+    }
+}
+
 // Initializes map data, switches, doors, riddles and darkness for the given screen id
 void screen::initScreenData(int id) {
     doors.clear();
@@ -57,60 +155,32 @@ void screen::initScreenData(int id) {
     torchLit = false;
     currentScreenID = id;
 
-    // Setup for screen 0
-    if (currentScreenID == 0) {
-        char Screen1[MAX_Y][MAX_X + 1] = {
-            //01234567890123456789012345678901234567890123456789012345678901234567890123456789
-             "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
-             "W              Player1:                W                Player2:               W", // 1
-             "W Inventory:                           W Inventory:                            W", // 2
-             "W Current Room:                        W Current Room:                         W", // 3
-             "W                                      W                                       W", // 4
-             "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 5
-             "W                 W                W                W          W               W", // 6
-             "W  WWWWWWWWWWWWW  W                W                W K W      WWWWWWWWWWWW    W", // 7
-             "WK             W  W                W                WWWWW      WW         W    W", // 8
-             "WWWWWWWWWWWWWWWW  W                W                           WW   WWWW  W    W", // 9
-             "W                                  W                           WW   W  W  W    W", // 10
-             "W                                  2                                W  W  W    W", // 11
-             "W                 W                W         WWWWW             WWWWWW  W  W    W", // 12
-             "W                 W                W         W K W             W       W  W    W", // 13
-             "W                 W                W         W                 W       W       3", // 14
-             "WWWWWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 15
-             "W  K     W                                                                     W", // 16
-             "W        W                   WWW?WWW                                           W", // 17
-             "W        W                   W     W                                           W", // 18
-             "W        1                   W  K  W                                           W", // 19
-             "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW    W", // 20
-             "W            W                             W                                   W", // 21
-             "W            W             W               W                                   W", // 22
-             "W            ?             W                              !                    W", // 23
-             "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"  // 24
-        };
-
-        // Collect initial positions of all keys on this screen
-        initialKeyPositions.clear();
-        for (int y = 0; y < MAX_Y; ++y) {
-            for (int x = 0; x < MAX_X; ++x) {
-                if (Screen1[y][x] == 'K') {
-                    initialKeyPositions.emplace_back(x, y, 0, 0, 'K');
-                }
+    // Load data from file associated with this screen
+    // Note: fileName must be set before calling initScreenData, which happens in constructor
+    if (!fileName.empty()) {
+        loadFromFile(fileName);
+    }
+    
+    // Collect initial positions of all keys on this screen
+    // This logic relies on 'mapData' being populated
+    initialKeyPositions.clear();
+    for (int y = 0; y < MAX_Y; ++y) {
+        for (int x = 0; x < MAX_X; ++x) {
+            if (mapData[y][x] == 'K') {
+                initialKeyPositions.emplace_back(x, y, 0, 0, 'K');
             }
         }
+    }
 
-        // Copy the screen layout into mapData
-        for (int i = 0; i < MAX_Y; ++i) {
-            strcpy_s(mapData[i], MAX_X + 1, Screen1[i]);
-        }
 
+    // Setup for screen 0 (hardcoded entities)
+    if (currentScreenID == 0) {
+        
         // Register switches for this screen
         registerSwitch(0, Point(5, 10, 0, 0, '/'), SwitchState::OFF);
         registerSwitch(1, Point(20, 10, 0, 0, '/'), SwitchState::OFF);
 
-        // Setup riddles for this screen
-        riddles.clear();
-        riddles.push_back(Riddle(0, Point(13, 23, 0, 0, '?'), "What has keys but can't open locks?", "Keyboard"));
-        riddles.push_back(Riddle(1, Point(32, 17, 0, 0, '?'), "What has Laces but does not wear clothes?", "Shoe"));
+        // Riddles are loaded from file now
 
         // Switch requirements for door 3
         const Doors::SwitchRequirement doorSwitchReq[] = {
@@ -119,10 +189,19 @@ void screen::initScreenData(int id) {
         };
         const size_t doorSwitchReqCount = sizeof(doorSwitchReq) / sizeof(doorSwitchReq[0]);
 
+		obstacles.clear();
+		obstacles.emplace_back(Obstacle({ Point(57, 15, 0, 0, '*'), Point(57, 16, 0, 0, '*'), Point(58, 15, 0, 0, '*'), Point(58, 16, 0, 0, '*') }, this));
+		obstacles.emplace_back(Obstacle({ Point(27, 15, 0, 0, '*')}, this));
+
+
+		springs.clear();
+        springs.emplace_back(Spring({ Point(57, 23, 0, 0, '#'), Point(57, 22, 0, 0, '#'), Point(57, 21, 0, 0, '#') }, Direction::UP, this));
+        springs.emplace_back(Spring({ Point(1, 10, 0, 0, '#'), Point(2, 10, 0, 0, '#'), Point(3, 10, 0, 0, '#'), Point(4, 10, 0, 0, '#') }, Direction::RIGHT, this));
+        
         // Key positions for doors on this screen
         std::vector<Point> keyPositions1 = { Point(32, 19, 0, 0, 'K') };
         std::vector<Point> keyPositions2 = { Point(3, 16, 0, 0, 'K'), Point(1, 8, 0, 0, 'K') };
-        std::vector<Point> keyPositions3 = { Point(47, 13, 0, 0, 'K'), Point(54, 7, 0, 0, 'K') };
+        std::vector<Point> keyPositions3 = {};//{ Point(47, 13, 0, 0, 'K'), Point(54, 7, 0, 0, 'K') };
 
         // Create doors for this screen
         doors.emplace_back(1, 0, Point(9, 19, 0, 0, ' '),
@@ -130,7 +209,7 @@ void screen::initScreenData(int id) {
         doors.emplace_back(2, 0, Point(35, 11, 0, 0, ' '),
             keyPositions2, 2, nullptr, 0);
         doors.emplace_back(3, 1, Point(1, 23, 0, 0, ' '),
-            keyPositions3, 2,
+            keyPositions3, 0,
             doorSwitchReq, doorSwitchReqCount);
 
         // Mark dark area for torch effect
@@ -138,58 +217,12 @@ void screen::initScreenData(int id) {
     }
     // Setup for screen 1
     else if (currentScreenID == 1) {
-        char Screen2[MAX_Y][MAX_X + 1] = {
-            //01234567890123456789012345678901234567890123456789012345678901234567890123456789
-             "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
-             "W              Player1:                W                Player2:               W", // 1
-             "W Inventory:                           W Inventory:                            W", // 2
-             "W Current Room:                        W Current Room:                         W", // 3
-             "W                                      W                                       W", // 4
-             "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 5
-             "W                                                                              W", // 6
-             "W                                                                              5", // 7
-             "W4WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 8
-             "W           W                    K W                         W K               W", // 9
-             "W           W            W      WWWW                         WWWW              W", // 10
-             "W                        W                                                     W", // 11
-             "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW?W", // 12
-             "W                                                                              W", // 13
-             "W                   WWWWWWWWWWWWWWWW              WWWW             W           W", // 14
-             "W                 WWWWWWWWWWWWWWWWWWWW            W                W           W", // 15
-             "W    WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 16
-             "W                               W                  W                           W", // 17
-             "W             W                 W                               W              W", // 18
-             "W             W                                    W            W              W", // 19
-             "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW?W", // 20
-             "W                                             W                                W", // 21
-             "W                                             WWWW                             W", // 22
-             "3   !                                                                          W", // 23
-             "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"  // 24
-        };
-
-        // Collect initial positions of all keys on this screen
-        initialKeyPositions.clear();
-        for (int y = 0; y < MAX_Y; ++y) {
-            for (int x = 0; x < MAX_X; ++x) {
-                if (Screen2[y][x] == 'K') {
-                    initialKeyPositions.emplace_back(x, y, 0, 0, 'K');
-                }
-            }
-        }
-
-        // Copy the screen layout into mapData
-        for (int i = 0; i < MAX_Y; ++i) {
-            strcpy_s(mapData[i], MAX_X + 1, Screen2[i]);
-        }
 
         // Register switches for this screen
         registerSwitch(2, Point(48, 21, 0, 0, '/'), SwitchState::OFF);
         registerSwitch(3, Point(52, 15, 0, 0, '/'), SwitchState::OFF);
 
-        // Setup riddles for this screen
-        riddles.clear();
-        riddles.push_back(Riddle(2, Point(78, 20, 0, 0, '?'), "What has a Tongue but cannot speak?", "Wagon"));
-        riddles.push_back(Riddle(3, Point(78, 12, 0, 0, '?'), "What has a Bed but never sleeps?", "River"));
+        // Riddles from file
 
         // Switch requirements for door 5
         const Doors::SwitchRequirement doorSwitchReq[] = {
@@ -216,38 +249,7 @@ void screen::initScreenData(int id) {
     }
     // Setup for final screen
     else {
-        char EndScreen[MAX_Y][MAX_X + 1] = {
-        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
-        "W                                                                              W", // 1
-        "W                                                                              W", // 2
-        "W                                                                              W", // 3
-        "W                   WWWWWWWWWWWWW  W           W  WWWWWWWWWWW                  W", // 4
-        "W                         W        W           W  W                            W", // 5
-        "W                         W        W           W  W                            W", // 6
-        "W                         W        WWWWWWWWWWWWW  WWWWWWWWWWW                  W", // 7
-        "W                         W        W           W  W                            W", // 8
-        "W                         W        W           W  W                            W", // 9
-        "W                         W        W           W  WWWWWWWWWWW                  W", // 10
-        "W                                                                              W", // 11
-        "W                                                                              W", // 12
-        "W                         WWWWWWWWWW  WW      W  WWWWWW                        W", // 13
-        "W                         W           W W     W  W     W                       W", // 14
-        "W                         W           W  W    W  W      W                      W", // 15
-        "W                         WWWWWWWWWW  W   W   W  W       W                     W", // 16
-        "W                         W           W    W  W  W      W                      W", // 17
-        "W                         W           W     W W  W     W                       W", // 18
-        "W                         WWWWWWWWWW  W      WW  WWWWWW                        W", // 19
-        "W                                                                              W", // 20
-        "W                                                                              W", // 21
-        "W                                                                              W", // 22
-        "W                  Press any key to return to the menu....                     W", // 23
-        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"  // 24
-        };
-
-        // Copy the end screen layout into mapData
-        for (int i = 0; i < MAX_Y; ++i) {
-            strcpy_s(mapData[i], MAX_X + 1, EndScreen[i]);
-        }
+        // Just map data, mostly static
     }
 }
 
@@ -272,9 +274,40 @@ Riddle* screen::getRiddleByPosition(const Point& p) {
     return nullptr;
 }
 
+Spring* screen::getSpringByPosition(const Point& p) {
+	for (auto& spring : springs) {
+		for (const auto& pos : spring.getPositions()) {
+			if (pos.getX() == p.getX() && pos.getY() == p.getY()) {
+				return &spring;
+			}
+		}
+	}
+	return nullptr;
+
+}
+
+Obstacle* screen::getObstacleByPosition(const Point& p) {
+    for (auto& obstacle : obstacles) {
+        for (const auto& pos : obstacle.getPositions()) {
+            if (pos.getX() == p.getX() && pos.getY() == p.getY()) {
+                return &obstacle;
+            }
+        }
+    }
+    return nullptr;
+
+}
+
 // Sets the character in the map at this position
 void screen::setCharAt(const Point& pos, char ch)
 {
+    if (ch == ' ') {
+        SwitchBoard::SwitchEntry* sw = switchBoard.getSwitchAt(pos);
+        if (sw != nullptr) {
+            mapData[pos.getY()][pos.getX()] = switchStateToChar(sw->currentState);
+            return;
+        }
+    }
     mapData[pos.getY()][pos.getX()] = ch;
 }
 
@@ -329,3 +362,15 @@ void screen::markDarkArea(int x1, int y1, int x2, int y2) {
 void screen::setTorchLit(bool lit) {
     torchLit = lit;
 }
+
+bool screen::isClear(const Point& p, bool canPassSpring) {
+    char ch = getCharAt(p);
+    if (ch == ' ' || isKey(p) || isTorch(p) || isSwitchOn(p) || isSwitchOff(p) || isRiddle(p) || isObstacle(p)) {
+        return true;
+    }
+	if (canPassSpring && isSpring(p)) {
+		return true;
+	}
+    return false; 
+}
+

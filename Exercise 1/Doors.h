@@ -40,4 +40,5 @@ public:
     char getDisplayChar() const { return (char)('0' + doorID); }
     size_t getRequiredKeyCount() const { return requiredKeyCount; }
     size_t getRequiredSwitchCount() const { return requiredSwitchCount; }
+	bool isOpen() const { return isCurrentlyOpen; }
 };

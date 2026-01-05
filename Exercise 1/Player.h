@@ -8,14 +8,17 @@
 #include "Riddle.h"
 #include "screen.h"
 #include "Doors.h"
+#include "Spring.h"
+
+class GameManager;	
 
 class Player {
 	static constexpr int NUM_KEYS = 6;
-	static constexpr int MOVE_TICK_INTERVAL = 1; 
+	static constexpr int MOVE_TICK_INTERVAL = 1;
 	char the_keys[NUM_KEYS];
 	Point p;
 	Doors* currDoor = nullptr;
-	bool awaitingScreenTransition = false; 
+	bool awaitingScreenTransition = false;
 	screen* theScreen;
 	Point heldElementPos;
 	Point keyFirstPos = Point(-1, -1, 0, 0, ' ');
@@ -26,9 +29,17 @@ class Player {
 	Direction lastMoveDir = Direction::STAY;
 	bool hasKeyInInventory(const Point& keyPos) const;
 	bool removeKeyFromInventory(const Point& keyPos);
+	bool bombRequested = false;
+	Point bombRequestPos = Point(-1, -1, 0, 0, ' ');
+	int springTimer = 0;
+	int springSpeed = 1;
+	Direction activeSpringDir;
+	bool isBeingLaunched = false;
+	Spring* springToReset = nullptr;
+	GameManager* gameManager = nullptr;
 
 public:
-	Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen);
+	Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen* screen, GameManager* gm);
 	void disposeElement();
 	void handleKeyPressed(char key_pressed);
 	void move();
@@ -57,5 +68,21 @@ public:
 	void handleDoorInteraction(const Point& p_orig, char targetChar, Doors* currentDoor);
 	void resetHeldElement() {
 		heldElement = ' ';
+	}
+	bool tryPopBombRequest(Point& out);
+	bool ifPlayerCanPressSpring(Spring* currSpring) const;
+	void initiateLaunch(Spring* s);
+	void handleSpringLaunch();
+	bool isPlayerKey(char key) const;
+	Direction getDirectionFromKey(char key) const;
+	Direction getDirection() const { return (isBeingLaunched) ? activeSpringDir : lastMoveDir;}
+	bool isPerpendicular(Direction dir1, Direction dir2) const;
+	Direction getActiveSpringDir() const { return activeSpringDir; }
+	int getSpringSpeed() const { return springSpeed; }
+	int getSpringTimer() const { return springTimer; }
+	void receiveLaunch(Direction dir, int speed, int timer, Direction lateralDir);
+	void handleInteractions(const Point& p_orig);
+	int getForce() const {
+		return (isBeingLaunched) ? springSpeed : 1;
 	}
 };
