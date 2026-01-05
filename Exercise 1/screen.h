@@ -1,12 +1,16 @@
 #pragma once
+
 #include <iostream>
 #include "Point.h"
 #include "Doors.h"
 #include "SwitchState.h"
 #include "SwitchBoard.h"
 #include "Riddle.h"
+#include "Spring.h"
+#include "Obstacle.h"
 #include <vector>
 #include <string>
+#include <map>
 
 using std::cout, std::endl;
 
@@ -19,6 +23,8 @@ private:
 	char mapData[MAX_Y][MAX_X + 1];
 	std::vector<Doors> doors;
 	std::vector<Riddle> riddles;
+	std::vector<Spring> springs;
+	std::vector<Obstacle> obstacles;
 	std::vector<Point> initialKeyPositions;
 	SwitchBoard switchBoard;
 	bool torchLit = false;
@@ -35,14 +41,43 @@ private:
 
 public:
 
-	screen(int id = 0) { initScreenData(id); }
+	screen(int id, const std::string& fileName) : currentScreenID(id), fileName(fileName) {
+		// Ensure riddles are loaded globally once
+		if (globalRiddles.empty()) {
+			// We can't easily bubble up errors from constructor without exceptions or a static init check.
+			// Ideally, GameManager calls loadRiddlesFromFile explicitly.
+			// For now, we'll leave this lazy load but we really should move it to GameManager logic if we want strict control.
+			// However, to keep it simple as per plan, we'll verify in the separate load call.
+		}
+		loadFromFile(fileName);
+		initScreenData(id);
+	}
+	
+	const std::vector<std::string>& getErrors() const { return errors; }
+	
+	// Check if riddles are loaded, if not load them and return success/fail
+	static bool validRiddlesLoaded() { return !globalRiddles.empty(); }
+	static bool loadRiddlesFromFile(const std::string& filename, std::vector<std::string>& outErrors);
 
+private:
+	std::string fileName;
+	std::vector<std::string> errors;
+	
+	void loadFromFile(const std::string& filename);
+	
+	// Global riddle cache: ID -> Riddle Logic (Question/Answers)
+	// We'll store Riddle objects here but Position will be irrelevant/placeholder in this cache.
+	static std::map<int, Riddle> globalRiddles;
+
+public:
 	char getCharAt(const Point& p) const {
 		return mapData[p.getY()][p.getX()];
 	}
 
 	Doors* getDoorByChar(char doorChar);
 	Riddle* getRiddleByPosition(const Point& p);
+	Spring* getSpringByPosition(const Point& p);
+	Obstacle* getObstacleByPosition(const Point& p);
 	SwitchBoard::SwitchEntry* getSwitchAt(const Point& pos);
 	SwitchState getSwitchState(int id) const;
 	const SwitchBoard& getSwitchBoard() const { return switchBoard; }
@@ -75,6 +110,14 @@ public:
 	}
 	bool isBomb(const Point& p) const {
 		return getCharAt(p) == '@' && !isBombArmedAt(p);
+	bool isSpring(const Point& p) const {
+		return getCharAt(p) == '#';
+	}
+	bool isObstacle(const Point& p) const {
+		return getCharAt(p) == '*';
+	}
+	bool isPlayer(const Point& p) const {
+		return getCharAt(p) == '$' || getCharAt(p) == '&';
 	}
 	void setCharAt(const Point& pos, char ch);
 	void markDarkArea(int x1, int y1, int x2, int y2);
@@ -93,4 +136,6 @@ public:
 	const std::string& getLoadError() const { return loadError; }
 	bool isInLegendArea(int x, int y) const;
 	static constexpr int LEGEND_TOTAL_H = 5;
+	bool isClear(const Point& p, bool canPassSpring);
+	std::vector<Obstacle>& getObstacles() { return obstacles; }
 };

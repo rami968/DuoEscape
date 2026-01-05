@@ -56,4 +56,15 @@ public:
 	void setChar(char c) {
 		ch = c;
 	}
+	void setX(int newX) {
+		x = newX;
+	}
+	void setY(int newY) {
+		y = newY;
+	}
+
+	Point calculateNext(Direction dir) const;
+	bool operator==(const Point& other) const {
+		return (x == other.x && y == other.y);
+	}
 };

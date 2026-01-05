@@ -3,10 +3,11 @@
 #include <cctype>
 #include <cstring>
 #include "Doors.h"
+#include "GameManager.h"
 
-Player::Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen) :
-	theScreen(&screen), p(point) {
-	std::memcpy(the_keys, keys, NUM_KEYS * sizeof(the_keys[0]));
+Player::Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen* screen, GameManager* gm) :
+	theScreen(screen), p(point), gameManager(gm){
+	std::memcpy(the_keys, keys, NUM_KEYS * sizeof(the_keys[0])); 
 }
 
 void Player::handleKeyPressed(char key_pressed) {  // Handle key press for movement and disposal
@@ -24,10 +25,17 @@ void Player::handleKeyPressed(char key_pressed) {  // Handle key press for movem
 		char k = the_keys[index];
 		if (k == lk) {
 			Direction dir = static_cast<Direction>(index);
-			p.setDirection(dir);
-			if (dir != Direction::STAY) {
-				lastMoveDir = dir; // Remember last moving direction
+			if (dir != p.getDirection() || dir == Direction::STAY) {
+				Spring* s = theScreen->getSpringByPosition(p);
+				if (s && s->isCompressed()) {
+					initiateLaunch(s);
+					return;
+				}
 			}
+			p.setDirection(dir);
+			//if (dir != Direction::STAY) {
+			lastMoveDir = dir; // Remember last moving direction
+			//}
 			return;
 
 		}
@@ -52,7 +60,13 @@ void Player::move() {
 	if (awaitingScreenTransition) {
 		return;
 	}
-	// movement timing
+
+	if (isBeingLaunched) {
+		handleSpringLaunch(); 
+		return;
+	}
+
+	// function by Copilot 
 	if (ticksUntilNextMove > 0) { // Check if movement interval has passed
 		--ticksUntilNextMove;
 		return;
@@ -64,42 +78,9 @@ void Player::move() {
 	p.draw(backgroundChar); // Redraw background at current position
 	Point p_orig = p;
 	p.move(); // Calculate new position
-	if (theScreen->isWall(p)) {
-		p = p_orig; // Collision: revert position
-	}
-	else if (theScreen->isDoor(p)) {
-		char targetChar = theScreen->getCharAt(p);
-		Doors* currentDoor = theScreen->getDoorByChar(targetChar);
-		handleDoorInteraction(p_orig, targetChar, currentDoor); // Handle door logic (pass/deposit/block)
-	}
-	else if (theScreen->getCharAt(p) == '@' && theScreen->isBombArmedAt(p)) {
-		p = p_orig;  // active bomb on the ground(counting down to explode) – block stepping onto this tile
-	}
-	else if (theScreen->isSwitchOff(p) || theScreen->isSwitchOn(p)) {
-		bool steppedOntoSwitch = (p.getX() != p_orig.getX()) || (p.getY() != p_orig.getY());
-		if (steppedOntoSwitch) {
-			theScreen->toggleSwitchAt(p); // Toggle switch state
-		}
-	}
-	else if (theScreen->isKey(p) || theScreen->isTorch(p) || theScreen->isBomb(p)) {
-		char elemChar = theScreen->getCharAt(p);
-		if (hasElement()) {
-			p = p_orig; // Cannot pick up if inventory is full
-			p.draw();
-			return;
-		}
-		pickUpElement(elemChar, p); // Update inventory
-		theScreen->setCharAt(p, ' '); // Remove element from map
-		theScreen->draw();
-		p.draw();
-	}
-	else if (theScreen->isRiddle(p)) {
-		Riddle* currentRiddle = theScreen->getRiddleByPosition(p);
-		p = p_orig; // Stop on riddle, movement handled by control unit
-		if (currentRiddle) {
-			setActiveRiddle(currentRiddle); // Signal riddle solving sequence
-		}
-	}
+	
+	handleInteractions(p_orig);
+
 	if (!awaitingScreenTransition) {
 		p.draw(); // Draw player at final position
 	}
@@ -262,11 +243,249 @@ bool Player::removeKeyFromInventory(const Point& keyPos) { // Removes key from c
 	return false; // Key not found
 }
 
-
-// Try to pop a bomb request (set by disposing a bomb) and return its position
 bool Player::tryPopBombRequest(Point& out) {
-    if (!bombRequested) return false;
-    out = bombRequestPos;
-    bombRequested = false;
-    return true;
+	if (!bombRequested) return false;
+	out = bombRequestPos;
+	bombRequested = false;
+	return true;
+}
+
+bool Player::ifPlayerCanPressSpring(Spring* currSpring) const {
+	if (p.getDirection() == Direction::RIGHT && currSpring->getReleaseDirection() == Direction::LEFT) {
+		return true;
+	}
+	else if (p.getDirection() == Direction::LEFT && currSpring->getReleaseDirection() == Direction::RIGHT) {
+		return true;
+	}
+	else if (p.getDirection() == Direction::UP && currSpring->getReleaseDirection() == Direction::DOWN) {
+		return true;
+	}
+	else if (p.getDirection() == Direction::DOWN && currSpring->getReleaseDirection() == Direction::UP) {
+		return true;
+	}
+	return false;
+}
+
+void Player::initiateLaunch(Spring* s) {
+	this->springSpeed = s->getReleaseSpeed();
+	this->springTimer = s->getReleaseDuration();
+	this->activeSpringDir = s->getReleaseDirection();
+	this->isBeingLaunched = true;
+	this->setDirection(activeSpringDir);
+
+	this->springToReset = s;
+}
+
+void Player::handleSpringLaunch() {
+	char backgroundUnderPlayer = theScreen->getCharAt(p);
+	p.draw(backgroundUnderPlayer);
+
+	Direction inputDir = this->p.getDirection(); 
+
+	if (isPerpendicular(inputDir, activeSpringDir)) {
+		Point lateralPos = p.calculateNext(inputDir);
+
+		if (theScreen->isClear(lateralPos, true) && !gameManager->isOtherPlayerAt(lateralPos, this)) {
+			p = lateralPos;
+		}
+	}
+
+	for (int i = 0; i < this->springSpeed; ++i) { 
+		Point nextPos = p.calculateNext(activeSpringDir);
+
+		if (gameManager->isOtherPlayerAt(nextPos, this)) {
+			gameManager->transferLaunch(this, nextPos);
+			this->springTimer = 0;
+			this->isBeingLaunched = false;
+			this->p.setDirection(Direction::STAY);
+			this->lastMoveDir = Direction::STAY;
+			return;
+		}
+		Point originalPos = p;
+		if (theScreen->isClear(nextPos, true)) {
+			p = nextPos;
+			handleInteractions(originalPos);
+			if (p == originalPos) {
+				break;
+			}
+			if (!isBeingLaunched) {
+				return; 
+			}
+		}
+		else {
+			this->springTimer = 0; 
+			this->isBeingLaunched = false;
+			this->springSpeed = 1;
+			this->p.setDirection(Direction::STAY);
+			this->lastMoveDir = Direction::STAY;
+			p.draw(); 
+			return;
+		}
+	}
+
+	if (this->springToReset != nullptr) {
+		this->springToReset->resetSpring();
+		theScreen->draw(); 
+		this->springToReset = nullptr; 
+	}
+
+	this->springTimer--; 
+	if (this->springTimer <= 0) {
+		this->isBeingLaunched = false;
+		this->springSpeed = 1;
+		if (isPerpendicular(inputDir, activeSpringDir)) {
+			this->p.setDirection(inputDir);
+			this->lastMoveDir = inputDir;
+		}
+		else {
+			this->p.setDirection(Direction::STAY);
+			this->lastMoveDir = Direction::STAY;
+		}
+	}
+	p.draw();
+}
+
+bool Player::isPlayerKey(char key) const {
+	for (size_t index = 0; index < NUM_KEYS; ++index) {
+		char k = the_keys[index];
+		if (k == key) {
+			return true;
+		}
+	}
+	return false;
+}
+
+
+Direction Player::getDirectionFromKey(char key) const {
+	for (size_t index = 0; index < NUM_KEYS; ++index) {
+		char k = the_keys[index];
+		if (k == key) {
+			return static_cast<Direction>(index);
+		}
+	}
+	return Direction::STAY;
+}
+
+bool Player::isPerpendicular(Direction dir1, Direction dir2)  const{
+	if ((dir1 == Direction::UP || dir1 == Direction::DOWN) &&
+		(dir2 == Direction::LEFT || dir2 == Direction::RIGHT)) {
+		return true;
+	}
+	if ((dir1 == Direction::LEFT || dir1 == Direction::RIGHT) &&
+		(dir2 == Direction::UP || dir2 == Direction::DOWN)){ 
+		return true;
+	}
+	return false;
+}
+
+void Player::receiveLaunch(Direction dir, int speed, int timer, Direction lateralDir) {
+	this->isBeingLaunched = true;
+	this->activeSpringDir = dir;
+	this->springSpeed = speed;
+	this->springTimer = timer;
+	this->p.setDirection(lateralDir);
+	this->lastMoveDir = lateralDir;
+
+	this->springToReset = nullptr;
+}
+
+void Player::handleInteractions(const Point& p_orig) {
+	if (theScreen->isWall(p)) {
+		Spring* theSpring = theScreen->getSpringByPosition(p_orig);
+		if (theSpring && theSpring->isCompressed()) {
+			p = p_orig;
+			initiateLaunch(theSpring);
+			return;
+		}
+		else {
+			p = p_orig;
+		}
+	}
+	else if (theScreen->isDoor(p)) {
+		char targetChar = theScreen->getCharAt(p);
+		Doors* currentDoor = theScreen->getDoorByChar(targetChar);
+		handleDoorInteraction(p_orig, targetChar, currentDoor); // Handle door logic (pass/deposit/block)
+	}
+	else if (theScreen->getCharAt(p) == '@' && theScreen->isBombArmedAt(p)) {
+		p = p_orig;  // active bomb on the ground(counting down to explode) ï¿½ block stepping onto this tile
+	}
+
+	else if (theScreen->isSwitchOff(p) || theScreen->isSwitchOn(p)) {
+		bool steppedOntoSwitch = (p.getX() != p_orig.getX()) || (p.getY() != p_orig.getY());
+		if (steppedOntoSwitch) {
+			theScreen->toggleSwitchAt(p); // Toggle switch state
+			if (isBeingLaunched) {
+				theScreen->draw();
+			}
+		}
+	}
+	else if (theScreen->isKey(p) || theScreen->isTorch(p) || theScreen->isBomb(p)) {
+		char elemChar = theScreen->getCharAt(p);
+		if (hasElement()) {
+			p = p_orig; // Cannot pick up if inventory is full
+			p.draw();
+			return;
+		}
+		pickUpElement(elemChar, p); // Update inventory
+		theScreen->setCharAt(p, ' '); // Remove element from map
+		theScreen->draw();
+		p.draw();
+	}
+	else if (theScreen->isRiddle(p)) {
+		Riddle* currentRiddle = theScreen->getRiddleByPosition(p);
+		p = p_orig; // Stop on riddle, movement handled by control unit
+		if (currentRiddle) {
+			setActiveRiddle(currentRiddle);// Signal riddle solving sequence
+			if (isBeingLaunched) {
+				this->isBeingLaunched = false;
+				this->springTimer = 0;
+			}
+		}
+
+	}
+	else if (theScreen->isSpring(p)) {
+		if (isBeingLaunched) {
+			this->isBeingLaunched = false;
+			this->springTimer = 0;
+			p = p_orig;
+			return;
+		}
+		Spring* currentSpring = theScreen->getSpringByPosition(p);
+		if (ifPlayerCanPressSpring(currentSpring)) {
+			currentSpring->compress();
+		}
+		else {
+			p = p_orig; // Cannot use spring, revert position
+		}
+	}
+	else if (theScreen->isObstacle(p)) {
+		Obstacle* currentObstacle = theScreen->getObstacleByPosition(p);
+		if (currentObstacle) {
+			Direction pushDir = (isBeingLaunched) ? activeSpringDir : lastMoveDir;
+			if (gameManager->canObstacleMove(currentObstacle, pushDir, this)) {
+				Obstacle* secondObs = nullptr;
+				for (const auto& part : currentObstacle->getPositions()) {
+					Point np = part.calculateNext(pushDir);
+					if (theScreen->isObstacle(np)) {
+						secondObs = theScreen->getObstacleByPosition(np);
+						if (secondObs == currentObstacle) secondObs = nullptr;
+						else break;
+					}
+				}
+				if (secondObs) secondObs->moveObstacle(pushDir);
+				currentObstacle->moveObstacle(pushDir);
+				if (isBeingLaunched && (theScreen->isSwitchOff(p) || theScreen->isSwitchOn(p))) {
+					theScreen->draw();
+				}
+			}
+			else {
+				p = p_orig; // Obstacle cannot be moved, revert position
+				lastMoveDir = Direction::STAY;
+				if (isBeingLaunched) {
+					this->isBeingLaunched = false;
+					this->springTimer = 0;
+				}
+			}
+		}
+	}
 }

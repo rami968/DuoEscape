@@ -46,4 +46,5 @@ public:
     bool isExternalDoor() const {
         return doorID == EXTERNAL_DOOR_ID_1 || doorID == EXTERNAL_DOOR_ID_2;
     }
+	bool isOpen() const { return isCurrentlyOpen; }
 };

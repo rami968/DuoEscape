@@ -46,3 +46,26 @@ Direction Point::getDirection() const {
 	// Any other case is treated as STAY (no movement)
 	return Direction::STAY;
 }
+
+
+Point Point::calculateNext(Direction dir) const {
+	Point nextPos = *this; 
+
+	switch (dir) {
+	case Direction::UP:
+		nextPos.y--;
+		break;
+	case Direction::DOWN:
+		nextPos.y++;
+		break;
+	case Direction::LEFT:
+		nextPos.x--;
+		break;
+	case Direction::RIGHT:
+		nextPos.x++;
+		break;
+	case Direction::STAY:
+		break;
+	}
+	return nextPos;
+}

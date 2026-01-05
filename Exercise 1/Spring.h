@@ -1,35 +1,33 @@
 #pragma once
+
 #include <vector>
 #include "Direction.h"
-#include "point.h"
+#include "Point.h"
+//#include "screen.h"
+
+class screen;
 
 class Spring{
-	std::vector<char> springChars;
+	std::vector<Point> positions;
 	Direction releaseDir;
-	Point anchorWall;           
 	int currentCompressedCount = 0;
+	int originalLength;     
+	screen* currScreen;
+	bool isSpringCompressed = false;
 public:
-	Spring(const Point& anchor, Direction dir, std::vector<char> spring)
-		: anchorWall(anchor), releaseDir(dir), springChars(spring) {
-	}
-	const Point& getAnchorWall() const {
-		return anchorWall;
-	}
+	Spring(const std::vector<Point>& pts, Direction dir, screen* theScreen);
 	const Direction getReleaseDirection() const {
 		return releaseDir;
 	}
-	void compress() {
-		if (currentCompressedCount < springChars.size()) {
-			currentCompressedCount++;
-		}
-	}
+	void compress();
 	int getReleaseSpeed() const {
 		return currentCompressedCount;
 	}
 	int getReleaseDuration() const {
 		return currentCompressedCount * currentCompressedCount;
 	}
-
-	
+	void resetSpring();
+	const std::vector<Point>& getPositions() const {return positions;}
+	bool isCompressed() const { return isSpringCompressed; }
 };
 
