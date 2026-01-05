@@ -110,6 +110,7 @@ public:
 	}
 	bool isBomb(const Point& p) const {
 		return getCharAt(p) == '@' && !isBombArmedAt(p);
+	}
 	bool isSpring(const Point& p) const {
 		return getCharAt(p) == '#';
 	}

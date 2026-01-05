@@ -13,8 +13,11 @@
 class GameManager;	
 
 class Player {
+public:
 	static constexpr int NUM_KEYS = 6;
 	static constexpr int MOVE_TICK_INTERVAL = 1;
+
+private:
 	char the_keys[NUM_KEYS];
 	Point p;
 	Doors* currDoor = nullptr;
@@ -34,7 +37,6 @@ class Player {
 	int lives = 3;
 
 public:
-	static constexpr int MOVE_TICK_INTERVAL = 1;
 	Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen& screen);
 	int springTimer = 0;
 	int springSpeed = 1;
