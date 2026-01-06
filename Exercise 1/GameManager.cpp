@@ -12,9 +12,11 @@
 #include "Bomb.h"
 #include "Doors.h"
 #include "utils.h"
+#include "MenuChoice.h"
 #include <filesystem>
 #include <string>
 #include <vector>
+#include "MapChar.h"
 
 namespace fs = std::filesystem;
 
@@ -22,19 +24,19 @@ enum Keys { ESC = 27 };
 
 GameManager::GameManager() :  
 	// Initialize players with nullptr screen initially
-	player1(Point(1, 19, 0, 0, '$'), "wdxase", nullptr, this),  
-	player2(Point(1, 23, 0, 0, '&'), "ilmjko", nullptr, this)
+	player1(Point(1, 19, 0, 0, static_cast<char>(MapChar::Player1)), "wdxase", nullptr, this),  
+	player2(Point(1, 23, 0, 0, static_cast<char>(MapChar::Player2)), "ilmjko", nullptr, this)
 {
     currentScreenID = 0;
 }
 
 bool GameManager::init(std::vector<std::string>& errors) {
-	// 1. Load Riddles
+	// Load Riddles
 	if (!screen::loadRiddlesFromFile("riddles.txt", errors)) {
 		return false; // Critical failure
 	}
 
-	// 2. Find all screen files
+	// Find all screen files
     std::vector<std::string> screenFiles;
     for (const auto& entry : fs::directory_iterator(".")) {
         if (entry.is_regular_file()) {
@@ -51,15 +53,19 @@ bool GameManager::init(std::vector<std::string>& errors) {
 		return false;
 	}
 
-    // 3. Initialize screens
+    // Initialize screens
     for (int i = 0; i < screenFiles.size(); ++i) {
         screens.emplace_back(i, screenFiles[i]);
 		// Collect errors from this screen load
 		const auto& screenErrors = screens.back().getErrors();
 		errors.insert(errors.end(), screenErrors.begin(), screenErrors.end());
+        // if this screen is invalid
+        if (!screens.back().isValid()) {
+            return false;
+        }
     }
-    
-    // 4. Set players to first screen if available
+
+    // Set players to first screen if available
     if (!screens.empty()) {
         player1.setScreen(&screens[0]);
         player2.setScreen(&screens[0]);
@@ -70,28 +76,32 @@ bool GameManager::init(std::vector<std::string>& errors) {
 }
 
 void GameManager::start() {
-	std::vector<std::string> errors;
-	if (!init(errors)) {
-		std::cerr << "Initialization failed:" << std::endl;
-		for (const auto& err : errors) {
-			std::cerr << err << std::endl;
-		}
-		std::cout << "Press any key to exit..." << std::endl;
-		std::cin.get();
-		return;
-	}
+    std::vector<std::string> errors;
+    if (!init(errors)) {
+        cls();
+        std::cout << "Initialization failed:\n\n";
+        for (const auto& err : errors) {
+            std::cout << err << "\n";
+        }
+        std::cout << "\nPress any key to return to menu...";
+        _getch();
 
-	// Print non-critical warnings
-	if (!errors.empty()) {
-		std::cerr << "Warnings:" << std::endl;
-		for (const auto& err : errors) {
-			std::cerr << err << std::endl;
-		}
-		std::cout << "Press Enter to continue..." << std::endl;
-		std::cin.get();
-	}
+        screens.clear();
 
-	showMenuAndHandleInput();
+        showMenuAndHandleInput();
+        return;
+    }
+
+    if (!errors.empty()) {
+        std::cerr << "Warnings:" << std::endl;
+        for (const auto& err : errors) {
+            std::cerr << err << std::endl;
+        }
+        std::cout << "Press Enter to continue..." << std::endl;
+        std::cin.get();
+    }
+
+    showMenuAndHandleInput();
 }
 
 void GameManager::changeScreen(int newScreenID, const Point& destinationPos, Player& p1, Player& p2) { // Change active screen and update player positions
@@ -139,8 +149,8 @@ void GameManager::resetGameState() {
     activeBombs.clear();
     player1.resetLives();
     player2.resetLives();
-    player1.setPosition(Point(1, 19, 0, 0, '$'));
-    player2.setPosition(Point(1, 23, 0, 0, '&'));
+    player1.setPosition(Point(1, 19, 0, 0, static_cast<char>(MapChar::Player1)));
+    player2.setPosition(Point(1, 23, 0, 0, static_cast<char>(MapChar::Player2)));
     // Re-assign players to the first screen instance
     player1.setScreen(&screens[0]);
     player2.setScreen(&screens[0]);
@@ -221,28 +231,41 @@ void GameManager::displayGameOver(const Player& p1, const Player& p2) const {
 }
 
 void GameManager::showMenuAndHandleInput() { // Main menu loop
-    char choice;
+    char choice = 0;
     bool running = true;
 
     while (running) {
         displayMenu();
+
         if (_kbhit()) {
             choice = static_cast<char>(_getch());
         }
         else {
             std::cin >> choice;
         }
+
         switch (choice) {
-        case '1':
-            resetGameState(); // Reset all game state for new run
+        case static_cast<char>(MenuChoice::Start):
+            if (screens.empty()) {
+                cls();
+                std::cout << "Cannot start game: invalid screen files were detected.\n";
+                std::cout << "Fix the screen files and restart the program.\n";
+                std::cout << "\nPress any key to return to menu...";
+                _getch();
+                break;
+            }
+            resetGameState();
             run();
             break;
-        case '8':
+
+        case static_cast<char>(MenuChoice::Instructions):
             displayInstructions();
             break;
-        case '9':
+
+        case static_cast<char>(MenuChoice::Exit):
             running = false;
             break;
+
         default:
             std::cout << "\n Invalid choice. Please try again (press any key to continue)...";
             _getch();
@@ -267,7 +290,7 @@ void GameManager::handleRiddleSolving(Player* player, screen& currentScreen) { /
         std::cin >> answer;
         if (riddle->checkAnswer(answer)) {
             // Correct answer: apply positive score change for successful riddle solving
-            addTeamScore(30);
+            addTeamScore(RIDDELE_SUCSESS_SCORE);
             std::cout << "Correct! You have solved the riddle." << std::endl;
             currentScreen.setCharAt(riddle->getPosition(), ' ');
             player->resetActiveRiddle();
@@ -282,7 +305,7 @@ void GameManager::handleRiddleSolving(Player* player, screen& currentScreen) { /
         }
         else {
             // Incorrect answer: apply negative score change for failed riddle attempt
-            removeTeamScore(10);
+            removeTeamScore(RIDDLE_FAIL_PENALTY);
             std::cout << "Incorrect answer. Try again later." << std::endl;
             std::cout << "Press any key to continue...";
             _getch();
@@ -338,7 +361,6 @@ bool GameManager::handleScreenTransition(Player& p1, Player& p2, bool& lastTorch
     }
     return false;
 }
-
 void GameManager::displayingPlayerStatus(Player& p1, Player& p2, screen& currentScreen) {
     if (!currentScreen.hasLegendArea()) {
         return;
@@ -354,7 +376,6 @@ void GameManager::displayingPlayerStatus(Player& p1, Player& p2, screen& current
     const int bottomY = baseY + 4;
 
     const bool drawTopBorder = (topY > 1);
-
     const bool drawBottomBorder = (bottomY < screen::MAX_Y - 2);
 
     if (drawTopBorder) {
@@ -399,15 +420,20 @@ void GameManager::displayingPlayerStatus(Player& p1, Player& p2, screen& current
         int t = bomb.getTicksRemaining();
         if (t < 0) t = 0;
 
-        if (bomb.getBombOwner() == 1) {
+        if (bomb.getBombOwner() == PLAYER1_ID) {
             if (p1BombTimer == -1 || t < p1BombTimer) p1BombTimer = t;
         }
-        else if (bomb.getBombOwner() == 2) {
+        else if (bomb.getBombOwner() == PLAYER2_ID) {
             if (p2BombTimer == -1 || t < p2BombTimer) p2BombTimer = t;
         }
     }
 
     int pointsTeam = teamScore;
+
+    int ticksElapsed = screenTicks;
+    int ticksUntilPenalty = MAX_TICKS_WITHOUT_SCORE_LOSS - ticksElapsed;
+    if (ticksUntilPenalty < 0) ticksUntilPenalty = 0;
+
     const int LEGEND_LINE_WIDTH = 78;
     const int COL_PLAYER1_LIVES = 1;
     const int COL_CURRENT_ROOM = 32;
@@ -426,27 +452,27 @@ void GameManager::displayingPlayerStatus(Player& p1, Player& p2, screen& current
 
     std::string line1(LEGEND_LINE_WIDTH, ' ');
     writeTextAtColumn(line1, COL_P1_INVENTORY_TIMER, "Inventory: " + std::string(1, p1Held));
+    writeTextAtColumn(line1, COL_POINTS_TEXT, "Score:" + std::to_string(pointsTeam)); 
     writeTextAtColumn(line1, COL_P2_INVENTORY_TIMER, "Inventory: " + std::string(1, p2Held));
     writeLegendLine(currentScreen, firstTextY + 1, line1);
 
     std::string line2(LEGEND_LINE_WIDTH, ' ');
-    writeTextAtColumn(line2, COL_P1_INVENTORY_TIMER,
-        "Timer Bomb:" + (p1BombTimer < 0 ? std::string("-") : std::to_string(p1BombTimer)));
-    writeTextAtColumn(line2, COL_POINTS_TEXT, "Points:" + std::to_string(pointsTeam));
-    writeTextAtColumn(line2, COL_P2_INVENTORY_TIMER,
-        "Timer Bomb:" + (p2BombTimer < 0 ? std::string("-") : std::to_string(p2BombTimer)));
+    writeTextAtColumn(line2, COL_P1_INVENTORY_TIMER, "Timer Bomb:" + (p1BombTimer < 0 ? std::string("-") : std::to_string(p1BombTimer)));
+    writeTextAtColumn(line2, COL_CURRENT_ROOM, "Ticks:" + std::to_string(ticksElapsed) + " Left:" + std::to_string(ticksUntilPenalty));
+    writeTextAtColumn(line2, COL_P2_INVENTORY_TIMER, "Timer Bomb:" + (p2BombTimer < 0 ? std::string("-") : std::to_string(p2BombTimer)));
     writeLegendLine(currentScreen, firstTextY + 2, line2);
 
     for (int dy = 0; dy < 5; ++dy) {
         int y = baseY + dy;
         gotoxy(0, y);
         for (int x = 0; x < screen::MAX_X; ++x) {
-            std::cout << currentScreen.getCharAt(Point(x, y, 0, 0, ' '));
+            std::cout << currentScreen.getCharAt(Point(x, y, 0, 0, static_cast<char>(MapChar::Empty)));
         }
     }
     std::cout.flush();
     gotoxy(p1.getPosition().getX(), p1.getPosition().getY());
 }
+
 
 bool GameManager::isOtherPlayerAt(const Point& pos, Player* callingPlayer) {
 	Player* other = (callingPlayer == &player1) ? &player2 : &player1;
@@ -585,7 +611,7 @@ if (_kbhit()) {
 				}
 			}
 		}
-        Sleep(50);
+       Sleep(LOOP_DELAY_MS);
     }
     if (player1.isDead() || player2.isDead()) {
         displayGameOver(player1, player2);
@@ -628,8 +654,8 @@ bool GameManager::processBombs(Player& p1, Player& p2) {
 
 void GameManager::pollBombRequests(Player& p1, Player& p2) {
     Point pos;
-    if (p1.tryPopBombRequest(pos)) armBombAt(pos, 1);
-    if (p2.tryPopBombRequest(pos)) armBombAt(pos, 2);
+    if (p1.tryPopBombRequest(pos)) armBombAt(pos, PLAYER1_ID);
+    if (p2.tryPopBombRequest(pos)) armBombAt(pos, PLAYER2_ID);
 }
 
 bool GameManager::explodeBomb(const Bomb& bomb, Player& p1, Player& p2) {
@@ -649,7 +675,7 @@ bool GameManager::explodeBomb(const Bomb& bomb, Player& p1, Player& p2) {
 
         Point target(x, y, 0, 0, ' ');
         char ch = currentScreen.getCharAt(target);
-        if (ch == 'W') continue;
+        if (ch == static_cast<char>(MapChar::Wall)) continue;
 
         currentScreen.markBombAsArmedAt(target, false);
 
@@ -660,13 +686,13 @@ bool GameManager::explodeBomb(const Bomb& bomb, Player& p1, Player& p2) {
             }
         }
         int dist = std::max(std::abs(dx), std::abs(dy));
-        if (ch == 'w') {
+        if (ch == static_cast<char>(MapChar::SoftWall)) {
             if (dist == 1) {
-                currentScreen.setCharAt(target, ' ');
+                currentScreen.setCharAt(target, static_cast<char>(MapChar::Empty));
             }
             continue;
         }
-        currentScreen.setCharAt(target, ' ');
+        currentScreen.setCharAt(target, static_cast<char>(MapChar::Empty));
     }
 
     if (p1Hit) p1.loseLife(1);
@@ -741,6 +767,7 @@ void GameManager::applyOngoingTimeLoss() {
     }
 }
 
+// Attempt to collect a star at the player's position
 void GameManager::tryCollectStar(Player& p) {
     screen& sc = getCurrentScreen();
     Point pos = p.getPosition();
@@ -761,6 +788,7 @@ void GameManager::writeLegendLine(screen& sc, int y, const std::string& text) {
     }
 }
 
+// Helper function to write text at a specific column in a legend line
 void GameManager::writeTextAtColumn(std::string& legendLine,
     int startColumn,
     const std::string& textToWrite)

@@ -1,9 +1,10 @@
 #include "Player.h"
 #include "Point.h"
-#include <cctype>
-#include <cstring>
 #include "Doors.h"
 #include "GameManager.h"
+#include "MapChar.h"
+#include <cctype>
+#include <cstring>
 
 Player::Player(const Point& point, const char(&keys)[NUM_KEYS + 1], screen* screen, GameManager* gm) :
 	theScreen(screen), p(point), gameManager(gm){
@@ -42,10 +43,10 @@ void Player::handleKeyPressed(char key_pressed) {  // Handle key press for movem
 	}
 }
 
-void Player::consumeHeldKey() {  // Remove held key from inventory
-	if (heldElement == 'K') {
-		removeKeyFromInventory(keyFirstPos); // Remove key from collected keys vector
-		heldElement = ' ';
+void Player::consumeHeldKey() {
+	if (heldElement == static_cast<char>(MapChar::Key)) {
+		removeKeyFromInventory(keyFirstPos);
+		heldElement = static_cast<char>(MapChar::Empty);
 	}
 }
 
@@ -66,7 +67,6 @@ void Player::move() {
 		return;
 	}
 
-	// function by Copilot 
 	if (ticksUntilNextMove > 0) { // Check if movement interval has passed
 		--ticksUntilNextMove;
 		return;
@@ -93,22 +93,26 @@ void Player::setPosition(const Point& newPos) {
 }
 
 char Player::getHeldElement() const { return heldElement; }
-bool Player::hasElement() const { return heldElement != ' '; }
-bool Player::hasTorch() const { return heldElement == '!'; }
-void Player::pickUpElement(char element, const Point& pos)
-{
+
+bool Player::hasElement() const {
+	return heldElement != static_cast<char>(MapChar::Empty);
+}
+
+bool Player::hasTorch() const {
+	return heldElement == static_cast<char>(MapChar::Torch);
+}
+
+void Player::pickUpElement(char element, const Point& pos) {
 	heldElement = element;
 	heldElementPos = pos;
-	if (element == 'K') {
-		const Point* originalID = theScreen->findOriginalKeyID(pos); // Find the original key ID
 
+	if (element == static_cast<char>(MapChar::Key)) {
+		const Point* originalID = theScreen->findOriginalKeyID(pos);
 		if (originalID) {
 			keyFirstPos = *originalID;
-
 			if (!hasKeyInInventory(*originalID)) {
-				collectedKeys.push_back(*originalID); // Store unique key ID
+				collectedKeys.push_back(*originalID);
 			}
-
 		}
 	}
 }
@@ -117,10 +121,10 @@ void Player::handleDoorInteraction(const Point& p_orig, char targetChar, Doors* 
 	if (currentDoor != nullptr) {
 		const SwitchBoard& switchBoard = theScreen->getSwitchBoard();
 		// Attempt to deposit key into door
-		if (hasElement() && getHeldElement() == 'K' && currentDoor->getRequiredKeyCount() > 0) {
+		if (hasElement() && getHeldElement() == static_cast<char>(MapChar::Key) && currentDoor->getRequiredKeyCount() > 0) {
 			if (currentDoor->depositKey(keyFirstPos)) {
 				consumeHeldKey(); // remove key from player's inventory and state
-				keyFirstPos = Point(-1, -1, 0, 0, ' ');
+				keyFirstPos = Point(-1, -1, 0, 0, static_cast<char>(MapChar::Empty));
 			}
 			p = p_orig;
 			return;
@@ -141,7 +145,7 @@ void Player::handleDoorInteraction(const Point& p_orig, char targetChar, Doors* 
 				// Internal door movement on the same screen (teleport)
 				p.draw(theScreen->getCharAt(p));
 				p = currentDoor->getDestinationPosition();
-				theScreen->setCharAt(p, ' ');
+				theScreen->setCharAt(p, static_cast<char>(MapChar::Empty));
 				p.setChar(playerChar);
 				p.setDirection(Direction::STAY);
 				p.draw();
@@ -152,11 +156,11 @@ void Player::handleDoorInteraction(const Point& p_orig, char targetChar, Doors* 
 	}
 	else {
 		p = p_orig; // Invalid door character
-	}
+		}
 }
 
 Point Player::getHeldElementPos() const {
-	if (heldElement == 'K') {
+	if (heldElement == static_cast<char>(MapChar::Key)) {
 		return keyFirstPos; // Return original key ID for key (stored in keyFirstPos)
 	}
 	return heldElementPos;
@@ -170,7 +174,7 @@ void Player::resetTransitionSignal() {
 
 
 void Player::disposeElement() {
-	if (heldElement == ' ')
+	if (heldElement == static_cast<char>(MapChar::Empty))
 		return;
 	Direction dir = p.getDirection();
 
@@ -195,19 +199,19 @@ void Player::disposeElement() {
 		theScreen->isRiddle(elementDropPos) ||
 		theScreen->isTorch(elementDropPos) ||
 		theScreen->isBomb(elementDropPos) ||
-		theScreen->getCharAt(elementDropPos) != ' ') {
+		theScreen->getCharAt(elementDropPos) != static_cast<char>(MapChar::Empty)) {
 		return; // Cannot drop element here
 	}
 
-	if (heldElement == 'K') {
+	if (heldElement == static_cast<char>(MapChar::Key)) {
 		removeKeyFromInventory(heldElementPos); // Remove key from collected keys
 	}
 
-	if (heldElement == '@') {
+	if (heldElement == static_cast<char>(MapChar::BombItem)) {
 		bombRequested = true;
 		bombRequestPos = elementDropPos;
-		theScreen->setCharAt(elementDropPos, '@');
-		heldElement = ' ';
+		theScreen->setCharAt(elementDropPos, static_cast<char>(MapChar::BombItem));
+		heldElement = static_cast<char>(MapChar::Empty);
 		p.setDirection(Direction::STAY);
 		lastMoveDir = Direction::STAY;
 		theScreen->draw();
@@ -216,7 +220,7 @@ void Player::disposeElement() {
 	}
 
 	theScreen->setCharAt(elementDropPos, heldElement); // Place element on map
-	heldElement = ' ';
+	heldElement = static_cast<char>(MapChar::Empty);
 	p.setDirection(Direction::STAY);
 	lastMoveDir = Direction::STAY;
 	theScreen->draw();
@@ -406,7 +410,7 @@ void Player::handleInteractions(const Point& p_orig) {
 		Doors* currentDoor = theScreen->getDoorByChar(targetChar);
 		handleDoorInteraction(p_orig, targetChar, currentDoor); // Handle door logic (pass/deposit/block)
 	}
-	else if (theScreen->getCharAt(p) == '@' && theScreen->isBombArmedAt(p)) {
+	else if (theScreen->getCharAt(p) == static_cast<char>(MapChar::BombItem) && theScreen->isBombArmedAt(p)) {
 		p = p_orig;  // active bomb on the ground(counting down to explode) � block stepping onto this tile
 	}
 
@@ -427,7 +431,7 @@ void Player::handleInteractions(const Point& p_orig) {
 			return;
 		}
 		pickUpElement(elemChar, p); // Update inventory
-		theScreen->setCharAt(p, ' '); // Remove element from map
+		theScreen->setCharAt(p, static_cast<char>(MapChar::Empty)); // Remove element from map
 		theScreen->draw();
 		p.draw();
 	}

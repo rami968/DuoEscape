@@ -36,8 +36,14 @@ private:
     static constexpr int MAX_TICKS_WITHOUT_SCORE_LOSS = 3000; // ~150s if Sleep(50)
     static constexpr int TICKS_PER_SCORE_LOSS = 400; // ~20s if Sleep(50)
     static constexpr int SCORE_LOSS_PER_STEP = 5;
+    static constexpr int RIDDELE_SUCSESS_SCORE = 30;
+    static constexpr int RIDDLE_FAIL_PENALTY = 10;
+    static constexpr int STAR_POINTS = 20;
     static constexpr char STAR_CHAR = '^';
-    static constexpr int  STAR_POINTS = 20;
+    static constexpr int LOOP_DELAY_MS = 50;
+    static constexpr int PLAYER1_ID = 1;
+    static constexpr int PLAYER2_ID = 2;
+
     void addTeamScore(int points);
     void removeTeamScore(int points);
     void applyFastExitBonus();

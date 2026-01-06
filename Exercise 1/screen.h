@@ -11,8 +11,10 @@
 #include <vector>
 #include <string>
 #include <map>
+#include "MapChar.h"
 
-using std::cout, std::endl;
+using std::cout;
+using std::endl;
 
 class screen {
 public:
@@ -41,15 +43,8 @@ private:
 
 public:
 
-	screen(int id, const std::string& fileName) : currentScreenID(id), fileName(fileName) {
-		// Ensure riddles are loaded globally once
-		if (globalRiddles.empty()) {
-			// We can't easily bubble up errors from constructor without exceptions or a static init check.
-			// Ideally, GameManager calls loadRiddlesFromFile explicitly.
-			// For now, we'll leave this lazy load but we really should move it to GameManager logic if we want strict control.
-			// However, to keep it simple as per plan, we'll verify in the separate load call.
-		}
-		loadFromFile(fileName);
+	screen(int id, const std::string& fileName) : currentScreenID(id), fileName(fileName)
+	{
 		initScreenData(id);
 	}
 	
@@ -88,37 +83,38 @@ public:
 	void draw() const;
 	bool isWall(const Point& p) const {
 		char ch = getCharAt(p);
-		return (ch == 'W' || ch == 'w');
+		return (ch == static_cast<char>(MapChar::Wall) || ch == static_cast<char>(MapChar::SoftWall));
 	}
 	bool isDoor(const Point& p) const {
 		return isdigit(getCharAt(p));
 	}
 	bool isSwitchOff(const Point& p) const {
-		return getCharAt(p) == '/';
+		return getCharAt(p) == static_cast<char>(MapChar::SwitchOff);
 	}
 	bool isSwitchOn(const Point& p) const {
-		return getCharAt(p) == '\\';
+		return getCharAt(p) == static_cast<char>(MapChar::SwitchOn);
 	}
 	bool isKey(const Point& p) const {
-		return getCharAt(p) == 'K';
+		return getCharAt(p) == static_cast<char>(MapChar::Key);
 	}
 	bool isTorch(const Point& p) const {
-		return getCharAt(p) == '!';
+		return getCharAt(p) == static_cast<char>(MapChar::Torch);
 	}
 	bool isRiddle(const Point& p) const {
-		return getCharAt(p) == '?';
+		return getCharAt(p) == static_cast<char>(MapChar::Riddle);
 	}
 	bool isBomb(const Point& p) const {
-		return getCharAt(p) == '@' && !isBombArmedAt(p);
+		return getCharAt(p) == static_cast<char>(MapChar::BombItem) && !isBombArmedAt(p);
 	}
 	bool isSpring(const Point& p) const {
-		return getCharAt(p) == '#';
+		return getCharAt(p) == static_cast<char>(MapChar::Spring);
 	}
 	bool isObstacle(const Point& p) const {
-		return getCharAt(p) == '*';
+		return getCharAt(p) == static_cast<char>(MapChar::Obstacle);
 	}
 	bool isPlayer(const Point& p) const {
-		return getCharAt(p) == '$' || getCharAt(p) == '&';
+		char ch = getCharAt(p);
+		return ch == static_cast<char>(MapChar::Player1) || ch == static_cast<char>(MapChar::Player2);
 	}
 	void setCharAt(const Point& pos, char ch);
 	void markDarkArea(int x1, int y1, int x2, int y2);
@@ -135,6 +131,7 @@ public:
 	int getLegendY() const { return legendY; }
 	bool isValid() const { return valid; }
 	const std::string& getLoadError() const { return loadError; }
+	void clearLegendAreaInMap();
 	bool isInLegendArea(int x, int y) const;
 	static constexpr int LEGEND_TOTAL_H = 5;
 	bool isClear(const Point& p, bool canPassSpring);

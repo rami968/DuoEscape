@@ -146,6 +146,8 @@
     <ClInclude Include="Direction.h" />
     <ClInclude Include="Doors.h" />
     <ClInclude Include="GameManager.h" />
+    <ClInclude Include="MapChar.h" />
+    <ClInclude Include="MenuChoice.h" />
     <ClInclude Include="Obstacle.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Point.h" />

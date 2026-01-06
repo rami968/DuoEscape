@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include "MapChar.h"
 
 // Converts a switch state to the character shown on the map
 char screen::switchStateToChar(SwitchState state) {
@@ -29,7 +30,7 @@ void screen::draw() const {
             char ch = mapData[y][x];
             // If this cell is dark and torch is not lit, draw space
             if (darkMask[y][x] && !torchLit) {
-                cout << ' ';
+                cout << static_cast<char>(MapChar::Empty);
             }
             else {
                 cout << ch;
@@ -101,7 +102,7 @@ void screen::loadFromFile(const std::string& filename) {
         errors.push_back("Critical Error: Could not open map file: " + filename);
         // Fill safe default map
         for (int y = 0; y < MAX_Y; ++y) {
-             for (int x = 0; x < MAX_X; ++x) mapData[y][x] = ' ';
+             for (int x = 0; x < MAX_X; ++x) mapData[y][x] = static_cast<char>(MapChar::Empty);
              mapData[y][MAX_X] = '\0';
         }
         return;
@@ -114,11 +115,11 @@ void screen::loadFromFile(const std::string& filename) {
              size_t len = std::min(line.length(), (size_t)MAX_X);
              std::copy(line.begin(), line.begin() + len, mapData[y]);
              for (size_t i = len; i < MAX_X; ++i) {
-                 mapData[y][i] = ' ';
+                 mapData[y][i] = static_cast<char>(MapChar::Empty);
              }
              mapData[y][MAX_X] = '\0';
         } else {
-             for (int i = 0; i < MAX_X; ++i) mapData[y][i] = ' ';
+             for (int i = 0; i < MAX_X; ++i) mapData[y][i] = static_cast<char>(MapChar::Empty);
              mapData[y][MAX_X] = '\0';
              // Not necessarily an error, maybe short file, but let's warn if it looks very short?
              // Actually many text editors might not add 25 lines. Defaulting to space is fine "overcoming problem".
@@ -147,7 +148,6 @@ void screen::loadFromFile(const std::string& filename) {
     }
 }
 
-// Initializes map data, switches, doors, riddles and darkness for the given screen id
 void screen::initScreenData(int id) {
     doors.clear();
     switchBoard.clear();
@@ -159,31 +159,46 @@ void screen::initScreenData(int id) {
     loadError.clear();
 
     // Load data from file associated with this screen
-    // Note: fileName must be set before calling initScreenData, which happens in constructor
     if (!fileName.empty()) {
         loadFromFile(fileName);
     }
-    findLegendPosition();
-    
-    // Collect initial positions of all keys on this screen
-    // This logic relies on 'mapData' being populated
-    initialKeyPositions.clear();
-    for (int y = 0; y < MAX_Y; ++y) {
+
+  
+    if (!findLegendPosition()) {
+        errors.push_back(loadError);
+        return;
+    }
+
+	// Validate that player start positions are not inside the legend area
+    for (int y = legendY; y < legendY + LEGEND_TOTAL_H; ++y) {
         for (int x = 0; x < MAX_X; ++x) {
-            if (mapData[y][x] == 'K') {
-                initialKeyPositions.emplace_back(x, y, 0, 0, 'K');
+            char c = mapData[y][x];
+            if (c == static_cast<char>(MapChar::Player1) ||
+                c == static_cast<char>(MapChar::Player2)) {
+
+                valid = false;
+                loadError = "Critical Error: Player start is inside the legend area in file: " + fileName;
+                errors.push_back(loadError);
+                return;
             }
         }
     }
 
-    // Setup for screen 0 (hardcoded entities)
+    // Collect initial positions of all keys on this screen
+    initialKeyPositions.clear();
+    for (int y = 0; y < MAX_Y; ++y) {
+        for (int x = 0; x < MAX_X; ++x) {
+            if (mapData[y][x] == static_cast<char>(MapChar::Key)) {
+                initialKeyPositions.emplace_back(x, y, 0, 0, static_cast<char>(MapChar::Key));
+            }
+        }
+    }
+	// Setup for screen 0
     if (currentScreenID == 0) {
         
         // Register switches for this screen
         registerSwitch(0, Point(5, 10, 0, 0, '/'), SwitchState::OFF);
         registerSwitch(1, Point(20, 10, 0, 0, '/'), SwitchState::OFF);
-
-        // Riddles are loaded from file now
 
         // Switch requirements for door 3
         const Doors::SwitchRequirement doorSwitchReq[] = {
@@ -202,16 +217,16 @@ void screen::initScreenData(int id) {
         springs.emplace_back(Spring({ Point(1, 10, 0, 0, '#'), Point(2, 10, 0, 0, '#'), Point(3, 10, 0, 0, '#'), Point(4, 10, 0, 0, '#') }, Direction::RIGHT, this));
         
         // Key positions for doors on this screen
-        std::vector<Point> keyPositions1 = { Point(32, 19, 0, 0, 'K') };
-        std::vector<Point> keyPositions2 = { Point(3, 16, 0, 0, 'K'), Point(1, 8, 0, 0, 'K') };
+        std::vector<Point> keyPositions1 = { Point(32, 19, 0, 0, static_cast<char>(MapChar::Key)) };
+        std::vector<Point> keyPositions2 = { Point(3, 16, 0, 0, static_cast<char>(MapChar::Key)), Point(1, 8, 0, 0, static_cast<char>(MapChar::Key)) };
         std::vector<Point> keyPositions3 = {};//{ Point(47, 13, 0, 0, 'K'), Point(54, 7, 0, 0, 'K') };
 
         // Create doors for this screen
-        doors.emplace_back(1, 0, Point(9, 19, 0, 0, ' '),
+        doors.emplace_back(1, 0, Point(9, 19, 0, 0, static_cast<char>(MapChar::Empty)),
             keyPositions1, 1, nullptr, 0);
-        doors.emplace_back(2, 0, Point(35, 11, 0, 0, ' '), 
+        doors.emplace_back(2, 0, Point(35, 11, 0, 0, static_cast<char>(MapChar::Empty)), 
             keyPositions2, 2, nullptr, 0);
-        doors.emplace_back(3, 1, Point(1, 23, 0, 0, ' '),
+        doors.emplace_back(3, 1, Point(1, 23, 0, 0, static_cast<char>(MapChar::Empty)),
             keyPositions3, 0,
             doorSwitchReq, doorSwitchReqCount);
 
@@ -220,11 +235,10 @@ void screen::initScreenData(int id) {
     }
     // Setup for screen 1
     else if (currentScreenID == 1) {
+
         // Register switches for this screen
         registerSwitch(2, Point(48, 21, 0, 0, '/'), SwitchState::OFF);
         registerSwitch(3, Point(52, 15, 0, 0, '/'), SwitchState::OFF);
-
-        // Riddles from file
 
         // Switch requirements for door 5
         const Doors::SwitchRequirement doorSwitchReq[] = {
@@ -234,15 +248,15 @@ void screen::initScreenData(int id) {
         const size_t doorSwitchReqCount = sizeof(doorSwitchReq) / sizeof(doorSwitchReq[0]);
 
         // Key positions for doors on this screen
-        std::vector<Point> keyPositions4 = { Point(63, 9, 0, 0, 'K') };
-        std::vector<Point> keyPositions5 = { Point(33, 9, 0, 0, 'K') };
+        std::vector<Point> keyPositions4 = { Point(63, 9, 0, 0, static_cast<char>(MapChar::Key)) };
+        std::vector<Point> keyPositions5 = { Point(33, 9, 0, 0, static_cast<char>(MapChar::Key)) };
 
         // Create doors for this screen
-        doors.emplace_back(3, 0, Point(78, 14, 0, 0, ' '), 
+        doors.emplace_back(3, 0, Point(78, 14, 0, 0, static_cast<char>(MapChar::Empty)), 
             std::vector<Point>{}, 0, nullptr, 0);
-        doors.emplace_back(4, 1, Point(1, 8, 0, 0, ' '), 
+        doors.emplace_back(4, 1, Point(1, 8, 0, 0, static_cast<char>(MapChar::Empty)), 
             keyPositions4, 1, nullptr, 0);
-        doors.emplace_back(5, 2, Point(1, 23, 0, 0, ' '), 
+        doors.emplace_back(5, 2, Point(1, 23, 0, 0, static_cast<char>(MapChar::Empty)), 
             keyPositions5, 1,
             doorSwitchReq, doorSwitchReqCount);
 
@@ -303,7 +317,7 @@ Obstacle* screen::getObstacleByPosition(const Point& p) {
 // Sets the character in the map at this position
 void screen::setCharAt(const Point& pos, char ch)
 {
-    if (ch == ' ') {
+    if (ch == static_cast<char>(MapChar::Empty)) {
         SwitchBoard::SwitchEntry* sw = switchBoard.getSwitchAt(pos);
         if (sw != nullptr) {
             mapData[pos.getY()][pos.getX()] = switchStateToChar(sw->currentState);
@@ -391,42 +405,64 @@ bool screen::isBombArmedAt(const Point& p) const {
     return bombIsArmed[y][x];
 }
 
-bool screen::findLegendPosition() {
+void screen::clearLegendAreaInMap() {
+    if (!hasLegend) return;  
+    for (int y = legendY; y < legendY + LEGEND_TOTAL_H; ++y) {
+        for (int x = 0; x < MAX_X; ++x) {
+            mapData[y][x] = static_cast<char>(MapChar::Empty);  
+        }
+    }
+}
+
+bool screen::findLegendPosition()
+{
     hasLegend = false;
-    legendX = 0;
+    legendX = 0;  
     legendY = -1;
-    const int LEGEND_HEIGHT = 5;
+
     int foundCount = 0;
+    int foundX = -1;
     int foundY = -1;
 
     for (int y = 0; y < MAX_Y; ++y) {
         for (int x = 0; x < MAX_X; ++x) {
             if (mapData[y][x] == 'L') {
                 ++foundCount;
-
-                if (foundCount == 1) {
-                    foundY = y;
-                }
-                mapData[y][x] = ' ';
+                foundX = x;
+                foundY = y;
+                mapData[y][x] = static_cast<char>(MapChar::Empty);
             }
         }
     }
+
     if (foundCount == 0) {
-        return false; 
+        valid = false;
+        loadError = "Invalid screen: missing 'L' legend marker.";
+        loadError += " (file: " + fileName + ")";
+        return false;
     }
+
     if (foundCount > 1) {
         valid = false;
         loadError = "Invalid screen: multiple 'L' legend markers were found.";
+        loadError += " (file: " + fileName + ")";
         return false;
     }
-    if (foundY < 0 || foundY + (LEGEND_HEIGHT - 1) >= MAX_Y) {
-        valid = false;
-        loadError = "Invalid legend position: 'L' at Y=" + std::to_string(foundY) +
-            " but legend height is 3 and screen height is " + std::to_string(MAX_Y) + ".";
-        return false;
-    } 
+
     legendY = foundY;
     legendX = 0;
+
+    const int legendBottomY = legendY + LEGEND_TOTAL_H - 1;
+    if (legendBottomY >= MAX_Y) {
+        valid = false;
+        loadError = "Invalid legend position: 'L' at row Y=" + std::to_string(foundY) +
+            ". Legend height is " + std::to_string(LEGEND_TOTAL_H) +
+            ", so it needs rows Y=" + std::to_string(foundY) + ".." +
+            std::to_string(legendBottomY) + " but screen rows are 0.." + std::to_string(MAX_Y - 1) + ".";
+        loadError += " (file: " + fileName + ")";
+        return false;
+    }
+
     hasLegend = true;
     return true;
 }
@@ -441,7 +477,7 @@ bool screen::isInLegendArea(int x, int y) const {
 
 bool screen::isClear(const Point& p, bool canPassSpring) {
     char ch = getCharAt(p);
-    if (ch == ' ' || isKey(p) || isTorch(p) || isSwitchOn(p) || isSwitchOff(p) || isRiddle(p) || isObstacle(p)) {
+    if (ch == static_cast<char>(MapChar::Empty) || isKey(p) || isTorch(p) || isSwitchOn(p) || isSwitchOff(p) || isRiddle(p) || isObstacle(p)) {
         return true;
     }
 	if (canPassSpring && isSpring(p)) {
