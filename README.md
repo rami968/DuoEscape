@@ -80,8 +80,8 @@
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/rami968/C-Project.git
-cd C-Project
+git clone https://github.com/rami968/DuoEscape.git
+cd DuoEscape
 
 # 2. Configure project with CMake
 cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -96,7 +96,7 @@ cmake --build build --config Release
 
 ### Visual Studio 2022
 1. Open Visual Studio.
-2. Select **Open a Local Folder** and choose the `C-Project` repository root directory.
+2. Select **Open a Local Folder** and choose the `DuoEscape` repository root directory.
 3. Visual Studio will automatically detect `CMakeLists.txt`.
 4. Select `DuoEscape.exe` from the target dropdown and click **Run (F5)**.
 
