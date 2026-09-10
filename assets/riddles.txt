@@ -1,0 +1,6 @@
+0|I have keys but no locks, and space but no room. What am I?|Keyboard
+1|The more of me there is, the less you see. What am I?|Darkness
+2|What has to be broken before you can use it?|egg
+3|What has a face and two hands but no arms or legs?|clock
+4|What has one eye but cannot see anything at all?|needle
+5|I am tall when I am young, and I am short when I am old. What am I?|candle
