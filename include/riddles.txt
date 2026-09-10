@@ -1,0 +1,4 @@
+0|What has keys but can't open locks?|Keyboard
+1|What has Laces but does not wear clothes?|Shoe
+2|What has a Tongue but cannot speak?|Wagon
+3|What has a Bed but never sleeps?|River
