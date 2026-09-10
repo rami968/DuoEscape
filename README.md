@@ -1,4 +1,4 @@
-# DuoEscape 🎮
+# C++ Project: DuoEscape 🎮
 ### *2-Player Cooperative ASCII Puzzle Adventure Engine in C++20*
 
 ![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg?style=flat-square&logo=cplusplus)
